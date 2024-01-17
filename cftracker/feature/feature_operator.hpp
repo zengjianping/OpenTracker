@@ -61,7 +61,7 @@ extern FEAT_DATA FeatureVectorMultiply(const FEAT_DATA &x, const std::vector<cv:
 extern FEAT_DATA FeatureDotMultiply(const FEAT_DATA &a, const FEAT_DATA &b);
 extern FEAT_DATA FeatureDotDivide(const FEAT_DATA &a, const FEAT_DATA &b);
 
-} // namespace namespace cftracker {
+} // namespace cftracker
 
 
 #endif

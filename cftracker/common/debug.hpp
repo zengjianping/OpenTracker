@@ -8,7 +8,6 @@
 #include <iostream>
 #include <cstdio>
 #include <ctime>
-
 #include <opencv2/opencv.hpp>
 
 

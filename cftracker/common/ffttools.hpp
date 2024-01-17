@@ -63,27 +63,7 @@ cv::Mat real2complex(const cv::Mat &x);
 cv::Mat mat_conj(const cv::Mat &org);
 float mat_sum_f(const cv::Mat &org);
 double mat_sum_d(const cv::Mat &org);
-
-inline bool SizeCompare(cv::Size &a, cv::Size &b) {
-    return a.height < b.height;
-}
-
-inline void rot90(cv::Mat &matImage, int rotflag) {
-    if (rotflag == 1) { // anticlockwise
-        cv::transpose(matImage, matImage);
-        cv::flip(matImage, matImage, 1); // flip around y-axis
-    }
-    else if (rotflag == 2) { // clockwise
-        cv::transpose(matImage, matImage);
-        cv::flip(matImage, matImage, 0); // flip around x-axis
-    }
-    else if (rotflag == 3) {
-        cv::flip(matImage, matImage, -1); // flip around both axis
-    }
-    else if (rotflag != 0) { // 0: keep the same
-        assert(0 && "error: unknown rotation flag!");
-    }
-}
+void rot90(cv::Mat &matImage, int rotflag);
 
 } // namespace cftracker
 

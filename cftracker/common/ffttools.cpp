@@ -500,5 +500,22 @@ double mat_sum_d(const cv::Mat &org) {
     return sum;
 }
 
+void rot90(cv::Mat &matImage, int rotflag) {
+    if (rotflag == 1) { // anticlockwise
+        cv::transpose(matImage, matImage);
+        cv::flip(matImage, matImage, 1); // flip around y-axis
+    }
+    else if (rotflag == 2) { // clockwise
+        cv::transpose(matImage, matImage);
+        cv::flip(matImage, matImage, 0); // flip around x-axis
+    }
+    else if (rotflag == 3) {
+        cv::flip(matImage, matImage, -1); // flip around both axis
+    }
+    else if (rotflag != 0) { // 0: keep the same
+        assert(0 && "error: unknown rotation flag!");
+    }
+}
+
 } // namespace cftracker
 

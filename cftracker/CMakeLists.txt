@@ -10,7 +10,7 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 option(GPU            "use GPU"                 OFF)
 option(OPENMP         "use OPENMP"              OFF)
 option(CUDNN          "use CUDNN"               OFF)
-option(MULTI_THREAD   "use MULTI_THREAD"        ON )
+option(MULTI_THREAD   "use MULTI_THREAD"        OFF)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
@@ -98,4 +98,7 @@ file(GLOB ALL_LIBRARY_SRCS
 
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBRARIES})
+
+add_executable(runecotracker.bin ${PROJECT_SOURCE_DIR}/tools/runecotracker.cpp)
+target_link_libraries(runecotracker.bin ${PROJECT_NAME} ${OpenCV_LIBS})
 

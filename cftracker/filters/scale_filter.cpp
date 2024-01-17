@@ -7,7 +7,7 @@
 
 namespace cftracker {
 
-void ScaleFilter::init(int &nScales, float &scale_step, const ScaleFilterParameter &params) {
+void ScaleFilter::init(int &nScales, float &scale_step, const ScaleParameters &params) {
     nScales = params.number_of_scales_filter;
     scale_step = params.scale_step_filter;
     float scale_sigma = params.number_of_interp_scales * params.scale_sigma_factor;
@@ -52,7 +52,7 @@ void ScaleFilter::init(int &nScales, float &scale_step, const ScaleFilterParamet
 }
 
 float ScaleFilter::scale_filter_track(const cv::Mat &im, const cv::Point2f &pos, const cv::Size2f &base_target_sz,
-        const float &currentScaleFactor, const ScaleFilterParameter &params) {
+        const float &currentScaleFactor, const ScaleParameters &params) {
     debug("%f", currentScaleFactor);
     std::vector<float> scales;
     for (unsigned int i = 0; i < scaleSizeFactors_.size(); i++) {
