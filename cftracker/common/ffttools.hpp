@@ -49,15 +49,15 @@ cv::Mat real(const cv::Mat img);
 cv::Mat imag(const cv::Mat img);
 cv::Mat magnitude(const cv::Mat img);
 
-cv::Mat complexDotMultiplication(const cv::Mat &a, const cv::Mat &b);
-cv::Mat complexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b);
+cv::Mat ComplexDotMultiplication(const cv::Mat &a, const cv::Mat &b);
+cv::Mat ComplexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b);
 #ifdef USE_SIMD
 cv::Mat complexDotMultiplicationSIMD(const cv::Mat &a, const cv::Mat &b);
 #endif
 
-cv::Mat complexDotDivision(const cv::Mat a, const cv::Mat b);
-cv::Mat complexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b);
-cv::Mat complexConvolution(const cv::Mat a_input, const cv::Mat b_input, const bool valid = 0);
+cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b);
+cv::Mat ComplexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b);
+cv::Mat ComplexConvolution(const cv::Mat a_input, const cv::Mat b_input, const bool valid = 0);
 
 cv::Mat real2complex(const cv::Mat &x);
 cv::Mat mat_conj(const cv::Mat &org);

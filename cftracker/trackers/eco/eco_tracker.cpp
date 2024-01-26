@@ -10,7 +10,15 @@
 
 namespace cftracker {
 
-void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &paramters) {
+EcoTracker::EcoTracker(const std::string config_file)
+        : BaseTracker() {
+    paramters_;
+}
+
+EcoTracker::~EcoTracker() {
+}
+
+void EcoTracker::init(const cv::Mat& im, const cv::Rect2f& rect) {
     double timereco = (double)cv::getTickCount();
     float fpseco = 0;
     // 0. Clean all the parameters.
@@ -63,7 +71,7 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     debug("pos_:%f, %f", pos_.y, pos_.x);
 
     // Read in all the parameters
-    init_parameters(paramters);
+    init_parameters(paramters_);
     printf("max_score_threshhold: %f\n", params_.max_score_threshhold);
 
     // Calculate search area and initial scale factor
@@ -82,21 +90,17 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     debug("base_target_size_:%f x %f", base_target_size_.height, base_target_size_.width);
 
     // window size, taking padding into account
-    if (params_.search_area_shape == "proportional")
-    {
+    if (params_.search_area_shape == "proportional") {
         img_sample_size_ = base_target_size_ * params_.search_area_scale;
     }
-    else if (params_.search_area_shape == "square")
-    {
+    else if (params_.search_area_shape == "square") {
         float img_sample_size__tmp;
         img_sample_size__tmp = sqrt(base_target_size_.area() * std::pow(params_.search_area_scale, 2));
         img_sample_size_ = cv::Size2i(img_sample_size__tmp, img_sample_size__tmp);
     }
-    else if (params_.search_area_shape == "fix_padding")
-    {
+    else if (params_.search_area_shape == "fix_padding") {
     }
-    else if (params_.search_area_shape == "custom")
-    {
+    else if (params_.search_area_shape == "custom") {
     }
     debug("img_sample_size_: %d x %d", img_sample_size_.height, img_sample_size_.width);
 
@@ -105,9 +109,9 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     // Number of Fourier coefficients to save for each filter layer. This will be an odd number.
     output_index_ = 0;
     output_size_ = 0;
+
     // The size of the label function DFT. Equal to the maximum filter size
-    for (size_t i = 0; i != feature_size_.size(); ++i)
-    {
+    for (size_t i = 0; i != feature_size_.size(); ++i) {
         size_t size = feature_size_[i].width + (feature_size_[i].width + 1) % 2; //=63, to make it as an odd number;
         filter_size_.push_back(cv::Size(size, size));
         debug("filter_size_ %lu: %d x %d", i, filter_size_[i].height, filter_size_[i].width);
@@ -118,20 +122,17 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     debug("output_index_:%lu, output_size_:%lu", output_index_, output_size_);
 
     // Compute the 2d Fourier series indices by kx and ky.
-    for (size_t i = 0; i < filter_size_.size(); ++i) // for each filter
-    {
+    for (size_t i = 0; i < filter_size_.size(); ++i) {// for each filter
         cv::Mat_<float> tempy(filter_size_[i].height, 1, CV_32FC1);
         cv::Mat_<float> tempx(1, filter_size_[i].height / 2 + 1, CV_32FC1);
 
         // ky in [-(N-1)/2, (N-1)/2], because N = filter_size_[i].height is odd (check above), N x 1;
-        for (int j = 0; j < tempy.rows; j++)
-        {
+        for (int j = 0; j < tempy.rows; j++) {
             tempy.at<float>(j, 0) = j - (tempy.rows / 2); // y index
         }
         ky_.push_back(tempy);
         // kx in [-N/2, 0], 1 x (N / 2 + 1)
-        for (int j = 0; j < tempx.cols; j++)
-        {
+        for (int j = 0; j < tempx.cols; j++) {
             tempx.at<float>(0, j) = j - (filter_size_[i].height / 2);
         }
         kx_.push_back(tempx);
@@ -140,17 +141,17 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
               ky_[i].size().height, ky_[i].size().width,
               kx_[i].size().height, kx_[i].size().width);
     }
+
     // Construct the Gaussian label function using Poisson formula
     yf_gaussian();
+
     // Construct cosine window
     cos_window();
+
     // Compute Fourier series of interpolation function, refer C-COT
-    for (size_t i = 0; i < filter_size_.size(); ++i) // for each feature
-    {
+    for (size_t i = 0; i < filter_size_.size(); ++i) {// for each feature
         cv::Mat interp1_fs1, interp2_fs1;
-        Interpolator::get_interp_fourier(filter_size_[i],
-                                         interp1_fs1,
-                                         interp2_fs1,
+        Interpolator::get_interp_fourier(filter_size_[i], interp1_fs1, interp2_fs1,
                                          params_.interpolation_bicubic_a);
         interp1_fs_.push_back(interp1_fs1);
         interp2_fs_.push_back(interp2_fs1);
@@ -160,12 +161,10 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
         //showmat2channels(interp1_fs1, 2);
         //showmat2channels(interp2_fs1, 2);
     }
+
     // Construct spatial regularization filter, refer SRDCF
-    for (size_t i = 0; i < filter_size_.size(); i++) // for each feature
-    {
-        cv::Mat temp_d = get_regularization_filter(img_support_size_,
-                                                   base_target_size_,
-                                                   params_);
+    for (size_t i = 0; i < filter_size_.size(); i++) {// for each feature
+        cv::Mat temp_d = get_regularization_filter(img_support_size_, base_target_size_, params_);
         cv::Mat temp_f;
         temp_d.convertTo(temp_f, CV_32FC1);
         reg_filter_.push_back(temp_f);
@@ -181,12 +180,11 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
         debug("reg_energy_ %lu: %f", i, energy);
     }
 
-    if (params_.use_scale_filter) // fDSST
-    {
+    if (params_.use_scale_filter) {// fDSST
         scale_filter_.init(nScales_, scale_step_, params_.scale_params);
         ScaleParameters& scale_params = params_.scale_params;
-        if (scale_params.scale_model_factor * scale_params.scale_model_factor * rect.area() > scale_params.scale_model_max_area)
-        {
+        if (scale_params.scale_model_factor * scale_params.scale_model_factor * rect.area() 
+                > scale_params.scale_model_max_area) {
             scale_params.scale_model_factor = std::sqrt(scale_params.scale_model_max_area / rect.area());
         }
 
@@ -196,44 +194,31 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
         scale_params.s_num_compressed_dim = nScales_;
         scale_factors_.push_back(1.0f);
     }
-    else // SAMF
-    {
+    else {// SAMF
         nScales_ = params_.number_of_scales;
         scale_step_ = params_.scale_step;
-        if (nScales_ % 2 == 0)
-        {
+        if (nScales_ % 2 == 0) {
             nScales_++;
         }
         int scalemin = floor((1.0 - (float)nScales_) / 2.0);
         int scalemax = floor(((float)nScales_ - 1.0) / 2.0);
-        for (int i = scalemin; i <= scalemax; i++)
-        {
+        for (int i = scalemin; i <= scalemax; i++) {
             scale_factors_.push_back(std::pow(scale_step_, i));
         }
         debug("scale: min:%d, max:%d", scalemin, scalemax);
         debug("scale_factors_:");
-        for (int i = 0; i < nScales_; i++)
-        {
+        for (int i = 0; i < nScales_; i++) {
             printf("%d:%f; ", i, scale_factors_[i]);
         }
         printf("\n");
     }
-    if (nScales_ > 0)
-    {
+    if (nScales_ > 0) {
         params_.min_scale_factor = //0.01;
-            std::pow(scale_step_,
-                     std::ceil(
-                         std::log(
-                             std::fmax(5 / (float)img_support_size_.width,
-                                       5 / (float)img_support_size_.height)) /
-                         std::log(scale_step_)));
+            std::pow(scale_step_, std::ceil(std::log(std::fmax(5 / (float)img_support_size_.width,
+                5 / (float)img_support_size_.height)) / std::log(scale_step_)));
         params_.max_scale_factor = //10;
-            std::pow(scale_step_,
-                     std::floor(
-                         std::log(
-                             std::fmin(im.cols / (float)base_target_size_.width,
-                                       im.rows / (float)base_target_size_.height)) /
-                         std::log(scale_step_)));
+            std::pow(scale_step_, std::floor(std::log(std::fmin(im.cols / (float)base_target_size_.width,
+                im.rows / (float)base_target_size_.height)) / std::log(scale_step_)));
     }
     debug("scalefactor min: %f max: %f", params_.min_scale_factor, params_.max_scale_factor);
 
@@ -242,21 +227,19 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     params_.CG_opts.tol = 1e-6;
     params_.CG_opts.CG_standard_alpha = true;
     params_.CG_opts.debug = params_.debug;
-    if (params_.CG_forgetting_rate == INF || params_.learning_rate >= 1)
-    {
+    if (params_.CG_forgetting_rate == INF || params_.learning_rate >= 1) {
         params_.CG_opts.init_forget_factor = 0;
     }
-    else
-    {
+    else {
         params_.CG_opts.init_forget_factor = std::pow(1.0f - params_.learning_rate, params_.CG_forgetting_rate);
     }
     //params_.CG_opts.init_forget_factor = 1;
     params_.CG_opts.maxit = std::ceil(params_.init_CG_iter / params_.init_GN_iter);
-    debug("-------------------------------------------------------------");
-    FEAT_DATA xl, xlf, xlf_proj;
 
     // 2. Extract features from the first frame.
-    xl = feature_extractor_.extractor(im, pos_, std::vector<float>(1, currentScaleFactor_), params_.feature_params, is_color_image_);
+    FEAT_DATA xl, xlf, xlf_proj;
+    xl = feature_extractor_.extractor(im, pos_, std::vector<float>(1, currentScaleFactor_),
+                                      params_.feature_params, is_color_image_);
     debug("xl size: %lu, %lu, %d x %d", xl.size(), xl[0].size(), xl[0][0].rows, xl[0][0].cols);
 
     // 3. Multiply the features by the cosine window.
@@ -269,22 +252,19 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     xlf = interpolate_dft(xlf, interp1_fs_, interp2_fs_);
 
     xlf = compact_fourier_coeff(xlf); // take half of the cols
-    for (size_t i = 0; i < xlf.size(); i++)
-    {
+    for (size_t i = 0; i < xlf.size(); i++) {
         debug("xlf feature %lu 's size: %lu, %d x %d", i, xlf[i].size(), xlf[i][0].rows, xlf[i][0].cols);
     }
 
     // 6. Initialize projection matrix P.
     projection_matrix_ = init_projection_matrix(xl, compressed_dim_, feature_dim_); // 32FC2 31x10
-    for (size_t i = 0; i < projection_matrix_.size(); i++)
-    {
+    for (size_t i = 0; i < projection_matrix_.size(); i++) {
         debug("projection_matrix %lu 's size: %d x %d", i, projection_matrix_[i].rows, projection_matrix_[i].cols);
     }
 
     // 7. Do the feature reduction for each feature.
     xlf_proj = FeatureProjection(xlf, projection_matrix_);
-    for (size_t i = 0; i < xlf.size(); i++)
-    {
+    for (size_t i = 0; i < xlf.size(); i++) {
         debug("xlf_proj feature %lu 's size: %lu, %d x %d", i, xlf_proj[i].size(), xlf_proj[i][0].rows, xlf_proj[i][0].cols);
     }
 
@@ -295,47 +275,35 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     // 9. Calculate sample energy and projection map energy.
     sample_energy_ = FeautreComputePower2(xlf_proj);
     std::vector<cv::Mat> proj_energy = project_mat_energy(projection_matrix_, yf_);
-    for (size_t i = 0; i < sample_energy_.size(); i++)
-    {
+    for (size_t i = 0; i < sample_energy_.size(); i++) {
         debug("sample_energy_: %lu, %lu, %d x %d", i, sample_energy_[i].size(), sample_energy_[i][0].rows, sample_energy_[i][0].cols);
     }
-    for (size_t i = 0; i < proj_energy.size(); i++)
-    {
+    for (size_t i = 0; i < proj_energy.size(); i++) {
         debug("proj_energy: %lu, %lu, %d x %d", i, proj_energy.size(), proj_energy[i].rows, proj_energy[i].cols);
     }
 
     // 10. Initialize filter and it's derivative.
-    FEAT_DATA hf, hf_inc;
-    for (size_t i = 0; i < xlf_proj.size(); i++) // for each feature
-    {
+    FEAT_DATA hf;
+    for (size_t i = 0; i < xlf_proj.size(); i++) {// for each feature
         hf.push_back(std::vector<cv::Mat>(xlf_proj[i].size(), cv::Mat::zeros(xlf_proj[i][0].size(), CV_32FC2)));
-        hf_inc.push_back(std::vector<cv::Mat>(xlf_proj[i].size(), cv::Mat::zeros(xlf_proj[i][0].size(), CV_32FC2)));
     }
-    for (size_t i = 0; i < hf.size(); i++)
-    {
+    for (size_t i = 0; i < hf.size(); i++) {
         debug("hf: %lu, %lu, %d x %d", i, hf[i].size(), hf[i][0].rows, hf[i][0].cols);
     }
+
     // 11. Train the tracker(train the filter and update the projection matrix).
-    eco_trainer_.train_init(hf,
-                            hf_inc,
-                            projection_matrix_,
-                            xlf,
-                            yf_,
-                            reg_filter_,
-                            sample_energy_,
-                            reg_energy_,
-                            proj_energy,
-                            params_);
+    eco_trainer_.train_init(hf, projection_matrix_, xlf, yf_, reg_filter_,
+        sample_energy_, reg_energy_, proj_energy, params_);
     eco_trainer_.train_joint();
-    //assert(0);
+
     // 12. Update projection matrix P.
     projection_matrix_ = eco_trainer_.get_proj();
-    for (size_t i = 0; i < projection_matrix_.size(); ++i)
-    {
+    for (size_t i = 0; i < projection_matrix_.size(); ++i) {
         double maxValue = 0, minValue = 0;
         cv::minMaxLoc(projection_matrix_[i], &minValue, &maxValue, NULL, NULL);
         debug("projection_matrix_ %lu: value: %lf %lf", i, minValue, maxValue);
     }
+
     // 13. Re-project the sample and update the sample space.
     xlf_proj = FeatureProjection(xlf, projection_matrix_);
     debug("xlf_proj size: %lu, %lu, %d x %d", xlf_proj.size(), xlf_proj[0].size(), xlf_proj[0][0].rows, xlf_proj[0][0].cols);
@@ -348,11 +316,11 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     // 15. Update filter f.
     hf_full_ = full_fourier_coeff(eco_trainer_.get_hf());
 
-    for (size_t i = 0; i < hf_full_.size(); i++)
-    {
+    for (size_t i = 0; i < hf_full_.size(); i++) {
         debug("hf_full_: %lu, %lu, %d x %d", i, hf_full_[i].size(),
               hf_full_[i][0].rows, hf_full_[i][0].cols);
     }
+
 #ifdef USE_MULTI_THREAD
     thread_flag_train_ = true;
 #endif
@@ -360,22 +328,19 @@ void EcoTracker::init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &
     debug("Initialize time: %f", fpseco);
 }
 
-bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
-{
+bool EcoTracker::update(const cv::Mat& frame, cv::Rect2f& roi) {
     //**************************************************************************
     //*****                     Localization
     //**************************************************************************
     cv::Point sample_pos = cv::Point(pos_);
     std::vector<float> samples_scales;
-    for (size_t i = 0; i < scale_factors_.size(); ++i)
-    {
+    for (size_t i = 0; i < scale_factors_.size(); ++i) {
         samples_scales.push_back(currentScaleFactor_ * scale_factors_[i]);
     }
 
     // 1: Extract features at multiple resolutions
     FEAT_DATA xt = feature_extractor_.extractor(frame, sample_pos, samples_scales, params_.feature_params, is_color_image_);
-    if (xt[0].size() == 0)
-    {
+    if (xt[0].size() == 0) {
         //print too much will cause VOT_Trax fail.
         //debug("Feature window is zero.");
         return false;
@@ -398,18 +363,17 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
 
     // 6: Compute the scores in Fourier domain for different scales of target
     std::vector<cv::Mat> scores_fs_sum;
-    for (size_t i = 0; i < scale_factors_.size(); i++) // for each scale
+    for (size_t i = 0; i < scale_factors_.size(); i++) {// for each scale
         scores_fs_sum.push_back(cv::Mat::zeros(filter_size_[output_index_], CV_32FC2));
-    for (size_t i = 0; i < xtf_proj.size(); i++) // for each feature
-    {
+    }
+    for (size_t i = 0; i < xtf_proj.size(); i++) {// for each feature
         int pad = (filter_size_[output_index_].height - xtf_proj[i][0].rows) / 2;
         cv::Rect temp_roi = cv::Rect(pad, pad, xtf_proj[i][0].cols, xtf_proj[i][0].rows); // get the roi
-        for (size_t j = 0; j < xtf_proj[i].size(); j++)                                      // for dimension x scale
-        {
+        for (size_t j = 0; j < xtf_proj[i].size(); j++) {// for dimension x scale
             size_t k1 = j / hf_full_[i].size(); // for each scale
             size_t k2 = j % hf_full_[i].size(); // for each dimension of scale
             //debug("%lu, %lu, %lu, %lu", i, j, k1, k2);
-            scores_fs_sum[k1](temp_roi) += complexDotMultiplication(xtf_proj[i][j], hf_full_[i][k2]);
+            scores_fs_sum[k1](temp_roi) += ComplexDotMultiplication(xtf_proj[i][j], hf_full_[i][k2]);
         }
     }
     //debug("scores_fs_sum: %lu, %d x %d", scores_fs_sum.size(), scores_fs_sum[0].rows, scores_fs_sum[0].cols);
@@ -418,6 +382,7 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     // 8: Optimize the continuous score function with Newton's method.
     OptimizeScores scores(scores_fs_sum, params_.newton_iterations);
     scores.compute_scores();
+
     // Compute the translation std::vector in pixel-coordinates and round to the closest integer pixel.
     int scale_change_factor = scores.get_scale_ind();
     float resize_scores_width = (img_support_size_.width / output_size_) * currentScaleFactor_ * scale_factors_[scale_change_factor];
@@ -429,37 +394,32 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     // 9: Update position
     pos_ = cv::Point2f(sample_pos) + cv::Point2f(dx, dy);
 
-    // Do scale tracking with the scale filtertraffic
-    if (nScales_ > 0 && params_.use_scale_filter)
-    {
+    // Do scale tracking with the scale filter traffic
+    if (nScales_ > 0 && params_.use_scale_filter) {
         scale_change_factor = scale_filter_.scale_filter_track(frame, pos_, base_target_size_, currentScaleFactor_, params_.scale_params);
     }
     // Update the scale
     currentScaleFactor_ = currentScaleFactor_ * scale_factors_[scale_change_factor];
 
     // Adjust the scale to make sure we are not too large or too small
-    if (currentScaleFactor_ < params_.min_scale_factor)
-    {
+    if (currentScaleFactor_ < params_.min_scale_factor) {
         currentScaleFactor_ = params_.min_scale_factor;
     }
-    else if (currentScaleFactor_ > params_.max_scale_factor)
-    {
+    else if (currentScaleFactor_ > params_.max_scale_factor) {
         currentScaleFactor_ = params_.max_scale_factor;
     }
+
     //**************************************************************************
     //*****                     Model update
     //**************************************************************************
     // 1: Get the sample calculated in localization
     FEAT_DATA xlf_proj;
-    for (size_t i = 0; i < xtf_proj.size(); ++i)
-    {
+    for (size_t i = 0; i < xtf_proj.size(); ++i) {
         std::vector<cv::Mat> tmp;
         int start_ind = scale_change_factor * projection_matrix_[i].cols;
         int end_ind = (scale_change_factor + 1) * projection_matrix_[i].cols;
-        for (size_t j = start_ind; j < (size_t)end_ind; ++j)
-        {
-            tmp.push_back(xtf_proj[i][j].colRange(0,
-                                                  xtf_proj[i][j].rows / 2 + 1));
+        for (size_t j = start_ind; j < (size_t)end_ind; ++j) {
+            tmp.push_back(xtf_proj[i][j].colRange(0, xtf_proj[i][j].rows / 2 + 1));
         }
         xlf_proj.push_back(tmp);
     }
@@ -467,9 +427,8 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
 
     // 2: Shift the sample so that the target is centered,
     //  A shift in spatial domain means multiply by exp(i pi L k), according to shift property of Fourier transformation.
-    cv::Point2f shift_samp =
-        2.0f * CV_PI * cv::Point2f(pos_ - cv::Point2f(sample_pos)) *
-        (1.0f / (currentScaleFactor_ * img_support_size_.width));
+    cv::Point2f shift_samp = 2.0f * CV_PI * cv::Point2f(pos_ - cv::Point2f(sample_pos)) *
+                             (1.0f / (currentScaleFactor_ * img_support_size_.width));
     xlf_proj = shift_sample(xlf_proj, shift_samp, kx_, ky_);
     //debug("shift_sample: %f %f", shift_samp.x, shift_samp.y);
 
@@ -488,7 +447,8 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     {
         sample_update_.replace_sample(xlf_proj, sample_update_.get_new_sample_id());
     }
-*/
+    */
+
     // 4: Train the tracker every Nsth frame, Ns in EcoTracker paper
     bool train_tracker = frames_since_last_train_ >= (size_t)params_.train_gap;
 
@@ -499,33 +459,29 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     params_.CG_opts.debug = params_.debug;
     params_.CG_opts.maxit = params_.CG_iter;
 
-    if (train_tracker)
-    {
+    if (train_tracker) {
         //debug("%lu %lu", sample_energy_.size(), FeautreComputePower2(xlf_proj).size());
         sample_energy_ = sample_energy_ * (1 - params_.learning_rate) +
                          FeautreComputePower2(xlf_proj) * params_.learning_rate;
 
 #ifdef USE_MULTI_THREAD
-        while (thread_flag_train_ == false)
-        {
+        while (thread_flag_train_ == false) {
             usleep(10); // sleep to allow change of flag in the thread
         }
-        if (pthread_create(&thread_train_, NULL, thread_train, this))
-        {
+        if (pthread_create(&thread_train_, NULL, thread_train, this)) {
             std::cout << "Error:unable to create thread!" << std::endl;
             exit(-1);
         }
 #else
         eco_trainer_.train_filter(sample_update_.get_samples(),
-                                  sample_update_.get_prior_weights(),
-                                  sample_energy_); // #6 x slower#
+            sample_update_.get_prior_weights(), sample_energy_); // #6 x slower#
 #endif
         frames_since_last_train_ = 0;
     }
-    else
-    {
+    else {
         ++frames_since_last_train_;
     }
+
     // 5: Update projection matrix P.
     // projection_matrix_ = eco_trainer_.get_proj();
 
@@ -533,16 +489,14 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     hf_full_ = full_fourier_coeff(eco_trainer_.get_hf());
 
     // Update the scale filter
-    if (nScales_ > 0 && params_.use_scale_filter)
-    {
+    if (nScales_ > 0 && params_.use_scale_filter) {
         //scale_filter = scale_filter_.scale_filter_update();
     }
 
     //**************************************************************************
     //*****                       Visualization
     //**************************************************************************
-    if (params_.debug == 1)
-    {
+    if (params_.debug) {
         cv::Mat resframe = frame.clone();
         cv::rectangle(resframe, roi, cv::Scalar(0, 255, 0));
 
@@ -550,8 +504,7 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
         std::vector<cv::Mat> scores_sum; //= scores_fs_sum;
 
         // Do inverse fft to the scores in the Fourier domain back to the spacial domain
-        for (size_t i = 0; i < scores_fs_sum.size(); ++i)
-        {
+        for (size_t i = 0; i < scores_fs_sum.size(); ++i) {
             int area = scores_fs_sum[i].size().area();
             // debug("area: %d", area);
             cv::Mat tmp = dft(fftshift(scores_fs_sum[i], 1, 1, 1), 1); // inverse dft
@@ -575,67 +528,57 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
         int y_vis = std::max(0, sample_pos.y - cm_img.rows / 2);
         int w_vis = 0;
         int h_vis = 0;
-        if (sample_pos.x + cm_img.cols / 2 > resframe.cols)
-        {
+        if (sample_pos.x + cm_img.cols / 2 > resframe.cols) {
             w_vis = resframe.cols - x_vis;
         }
-        else
-        {
+        else {
             w_vis = sample_pos.x + cm_img.cols / 2 - x_vis;
         }
-        if (sample_pos.y + cm_img.rows / 2 > resframe.rows)
-        {
+        if (sample_pos.y + cm_img.rows / 2 > resframe.rows) {
             h_vis = resframe.rows - y_vis;
         }
-        else
-        {
+        else {
             h_vis = sample_pos.y + cm_img.rows / 2 - y_vis;
         }
         //debug("%d %d %d %d",x_vis, y_vis, w_vis, h_vis);
         cv::Mat roi_vis = resframe(cv::Rect(x_vis, y_vis, w_vis, h_vis));
 
-        if (x_vis == 0)
-        {
+        if (x_vis == 0) {
             x_vis = cm_img.cols / 2 - sample_pos.x;
         }
-        else
-        {
+        else {
             x_vis = 0;
         }
-        if (y_vis == 0)
-        {
+        if (y_vis == 0) {
             y_vis = cm_img.rows / 2 - sample_pos.y;
         }
-        else
-        {
+        else {
             y_vis = 0;
         }
         //debug("%d %d %d %d",x_vis, y_vis, w_vis, h_vis);
         cv::Mat cm_img_vis = cm_img(cv::Rect(x_vis, y_vis, w_vis, h_vis));
 
-        cv::addWeighted(cm_img_vis, alpha_vis, roi_vis, 1.0 - alpha_vis,
-                        0.0, roi_vis);
+        cv::addWeighted(cm_img_vis, alpha_vis, roi_vis, 1.0 - alpha_vis, 0.0, roi_vis);
         // Add a circle to the expected next position
         cv::circle(resframe, pos_, 5, cv::Scalar(0, 255, 0));
         cv::circle(resframe, sample_pos, 5, cv::Scalar(0, 255, 225));
 
         cv::imshow("OpenTracker", resframe);
 
-        if (scores.get_max_score() < params_.max_score_threshhold)
-        {
+        if (scores.get_max_score() < params_.max_score_threshhold) {
             cvWaitKey(0);
         }
 
         int c = cvWaitKey(1);
         if (c != -1)
             c = c % 256;
-        if (c == 27)
-        {
+        if (c == 27) {
             cvDestroyWindow("OpenTracker");
             exit(1);
         }
         //cv::waitKey(0);
     }
+
     //**************************************************************************
     //*****                                Return
     //**************************************************************************
@@ -646,25 +589,19 @@ bool EcoTracker::update(const cv::Mat &frame, cv::Rect2f &roi)
     //debug("roi:%f, %f, %f, %f", roi.x, roi.y, roi.width, roi.height);
 
     //printf("max_score: %f\n", scores.get_max_score());
-    if (scores.get_max_score() >= params_.max_score_threshhold)
-    {
+    if (scores.get_max_score() >= params_.max_score_threshhold) {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 #ifdef USE_MULTI_THREAD
-void *EcoTracker::thread_train(void *params)
-{
+void *EcoTracker::thread_train(void *params) {
     //debug("thread running");
     EcoTracker *eco = (EcoTracker *)params;
     eco->thread_flag_train_ = false;
     eco->eco_trainer_.train_filter(eco->sample_update_.get_samples(),
-                                   eco->sample_update_.get_prior_weights(),
-                                   eco->sample_energy_);
+        eco->sample_update_.get_prior_weights(), eco->sample_energy_);
     //debug("thread end");
     eco->thread_flag_train_ = true;
     //pthread_detach(pthread_self());
@@ -672,8 +609,7 @@ void *EcoTracker::thread_train(void *params)
 }
 #endif
 
-void EcoTracker::init_parameters(const EcoParameters &parameters)
-{
+void EcoTracker::init_parameters(const EcoParameters &parameters) {
     // Features
     params_.feature_params = parameters.feature_params;
 
@@ -756,27 +692,23 @@ void EcoTracker::init_parameters(const EcoParameters &parameters)
     params_.gpu_id = parameters.gpu_id;
 }
 
-void EcoTracker::init_features()
-{
+void EcoTracker::init_features() {
 #ifdef USE_CAFFE
     // Init features parameters---------------------------------------
-    if (params_.useDeepFeature)
-    {
-        if (params_.use_gpu)
-        {
+    if (params_.useDeepFeature) {
+        if (params_.use_gpu) {
             printf("Setting up Caffe in GPU mode with ID: %d\n", params_.gpu_id);
             caffe::Caffe::set_mode(caffe::Caffe::GPU);
             caffe::Caffe::SetDevice(params_.gpu_id);
         }
-        else
-        {
+        else {
             printf("Setting up Caffe in CPU mode\n");
             caffe::Caffe::set_mode(caffe::Caffe::CPU);
         }
 
         params_.cnn_features.fparams.net.reset(new caffe::Net<float>(params_.cnn_features.fparams.proto, caffe::TEST)); // Read prototxt
-        params_.cnn_features.fparams.net->CopyTrainedLayersFrom(params_.cnn_features.fparams.model);                    // Read model
-        read_deep_mean(params_.cnn_features.fparams.mean_file);                                                            // Read mean file
+        params_.cnn_features.fparams.net->CopyTrainedLayersFrom(params_.cnn_features.fparams.model); // Read model
+        read_deep_mean(params_.cnn_features.fparams.mean_file); // Read mean file
 
         params_.cnn_features.img_input_sz = img_sample_size_; //250
         params_.cnn_features.img_sample_sz = img_sample_size_;
@@ -828,8 +760,7 @@ void EcoTracker::init_features()
               params_.cnn_features.fparams.start_ind[2], params_.cnn_features.fparams.end_ind[0], params_.cnn_features.fparams.end_ind[2]);
         debug("Finish------------------------");
     }
-    else
-    {
+    else {
         params_.cnn_features.fparams.net =
             boost::shared_ptr<caffe::Net<float>>();
     }
@@ -838,13 +769,11 @@ void EcoTracker::init_features()
 #endif
 
     FeatureParameters& feature_params = params_.feature_params;
-    if (!feature_params.useDeepFeature)
-    {
+    if (!feature_params.useDeepFeature) {
         img_support_size_ = img_sample_size_;
     }
 
-    if (feature_params.useHogFeature) // just HOG feature;
-    {
+    if (feature_params.useHogFeature) {// just HOG feature;
         feature_params.hog_features.img_input_sz = img_support_size_;
         feature_params.hog_features.img_sample_sz = img_support_size_;
         feature_params.hog_features.data_sz_block0 = cv::Size(
@@ -856,11 +785,9 @@ void EcoTracker::init_features()
         debug("data_sz_block0: %d", params_.hog_features.data_sz_block0.width);
         debug("Finish------------------------");
     }
-    if (feature_params.useColorspaceFeature)
-    {
+    if (feature_params.useColorspaceFeature) {
     }
-    if (feature_params.useCnFeature && is_color_image_)
-    {
+    if (feature_params.useCnFeature && is_color_image_) {
         feature_params.cn_features.img_input_sz = img_support_size_;
         feature_params.cn_features.img_sample_sz = img_support_size_;
         feature_params.cn_features.data_sz_block0 = cv::Size(
@@ -878,10 +805,8 @@ void EcoTracker::init_features()
         size_t rows = sizeof(feature_params.cn_features.fparams.table) / sizeof(feature_params.cn_features.fparams.table[0]);
         size_t cols = sizeof(feature_params.cn_features.fparams.table[0]) / sizeof(float);
         //debug("rows:%lu,cols:%lu", rows, cols);
-        for (size_t i = 0; i < rows; i++)
-        {
-            for (size_t j = 0; j < cols - 1; j++)
-            {
+        for (size_t i = 0; i < rows; i++) {
+            for (size_t j = 0; j < cols - 1; j++) {
                 getline(*read, s, '\t');
                 feature_params.cn_features.fparams.table[i][j] = atof(s.c_str());
             }
@@ -889,8 +814,7 @@ void EcoTracker::init_features()
             feature_params.cn_features.fparams.table[i][cols - 1] = atof(s.c_str());
         }
     }
-    if (feature_params.useIcFeature && !is_color_image_)
-    {
+    if (feature_params.useIcFeature && !is_color_image_) {
         feature_params.ic_features.img_input_sz = img_support_size_;
         feature_params.ic_features.img_sample_sz = img_support_size_;
         feature_params.ic_features.data_sz_block0 = cv::Size(
@@ -903,10 +827,8 @@ void EcoTracker::init_features()
         std::istringstream *read = new std::istringstream(path);
         size_t rows = sizeof(feature_params.ic_features.fparams.table) / sizeof(feature_params.ic_features.fparams.table[0]);
         size_t cols = sizeof(feature_params.ic_features.fparams.table[0]) / sizeof(float);
-        for (size_t i = 0; i < rows; i++)
-        {
-            for (size_t j = 0; j < cols - 1; j++)
-            {
+        for (size_t i = 0; i < rows; i++) {
+            for (size_t j = 0; j < cols - 1; j++) {
                 getline(*read, s, '\t');
                 feature_params.ic_features.fparams.table[i][j] = atof(s.c_str());
             }
@@ -918,45 +840,38 @@ void EcoTracker::init_features()
 
     // features setting-----------------------------------------------------
 #ifdef USE_CAFFE
-    if (feature_params.useDeepFeature)
-    {
+    if (feature_params.useDeepFeature) {
         feature_size_.push_back(feature_params.cnn_features.data_sz_block0);
         feature_size_.push_back(feature_params.cnn_features.data_sz_block1);
         feature_dim_ = feature_params.cnn_features.fparams.nDim;
         compressed_dim_ = feature_params.cnn_features.fparams.compressed_dim;
     }
 #endif
-    if (feature_params.useHogFeature)
-    {
+    if (feature_params.useHogFeature) {
         feature_size_.push_back(feature_params.hog_features.data_sz_block0);
         feature_dim_.push_back(feature_params.hog_features.fparams.nDim);
         compressed_dim_.push_back(feature_params.hog_features.fparams.compressed_dim);
     }
-    if (feature_params.useColorspaceFeature)
-    {
+    if (feature_params.useColorspaceFeature) {
     }
-    if (feature_params.useCnFeature && is_color_image_)
-    {
+    if (feature_params.useCnFeature && is_color_image_) {
         feature_size_.push_back(feature_params.cn_features.data_sz_block0);
         feature_dim_.push_back(feature_params.cn_features.fparams.nDim);
         compressed_dim_.push_back(feature_params.cn_features.fparams.compressed_dim);
     }
-    if (feature_params.useIcFeature && !is_color_image_)
-    {
+    if (feature_params.useIcFeature && !is_color_image_) {
         feature_size_.push_back(feature_params.ic_features.data_sz_block0);
         feature_dim_.push_back(feature_params.ic_features.fparams.nDim);
         compressed_dim_.push_back(feature_params.ic_features.fparams.compressed_dim);
     }
     // debug
-    for (size_t i = 0; i < feature_size_.size(); i++)
-    {
+    for (size_t i = 0; i < feature_size_.size(); i++) {
         debug("features %lu: %d %d %d x %d", i, feature_dim_[i], compressed_dim_[i], feature_size_[i].height, feature_size_[i].width);
     }
 }
 
 #ifdef USE_CAFFE
-void EcoTracker::read_deep_mean(const string &mean_file)
-{
+void EcoTracker::read_deep_mean(const string &mean_file) {
     caffe::BlobProto blob_proto;
     ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
 
@@ -970,8 +885,7 @@ void EcoTracker::read_deep_mean(const string &mean_file)
     //* The format of the mean file is planar 32-bit float BGR or grayscale.
     std::vector<cv::Mat> channels;
     float *data = mean_blob.mutable_cpu_data();
-    for (int i = 0; i < num_channels_; ++i)
-    {
+    for (int i = 0; i < num_channels_; ++i) {
         // Extract an individual channel.
         cv::Mat channel(mean_blob.height(), mean_blob.width(), CV_32FC1, data);
         channels.push_back(channel);
@@ -982,15 +896,13 @@ void EcoTracker::read_deep_mean(const string &mean_file)
     cv::merge(channels, feature_params.cnn_features.fparams.deep_mean_mat);
 
     // Get the mean for each channel.
-    feature_params.cnn_features.fparams.deep_mean_mean_mat =
-        cv::Mat(cv::Size(224, 224),
+    feature_params.cnn_features.fparams.deep_mean_mean_mat = cv::Mat(cv::Size(224, 224),
                 feature_params.cnn_features.fparams.deep_mean_mat.type(),
                 cv::mean(feature_params.cnn_features.fparams.deep_mean_mat));
 }
 #endif
 
-void EcoTracker::yf_gaussian() // real part of (9) in paper C-COT
-{
+void EcoTracker::yf_gaussian() {// real part of (9) in paper C-COT
     // sig_y is sigma in (9)
     double sig_y = sqrt(int(base_target_size_.width) * int(base_target_size_.height)) *
         (params_.output_sigma_factor) * (float(output_size_) / img_support_size_.width);
@@ -1066,8 +978,8 @@ FEAT_DATA EcoTracker::interpolate_dft(const FEAT_DATA &xlf, std::vector<cv::Mat>
 
         std::vector<cv::Mat> temp;
         for (size_t j = 0; j < xlf[i].size(); j++) {
-            temp.push_back(complexDotMultiplication(
-                complexDotMultiplication(interp1_fs_mat, xlf[i][j]), interp2_fs_mat));
+            temp.push_back(ComplexDotMultiplication(
+                ComplexDotMultiplication(interp1_fs_mat, xlf[i][j]), interp2_fs_mat));
         }
         result.push_back(temp);
     }
@@ -1137,7 +1049,7 @@ FEAT_DATA EcoTracker::shift_sample(FEAT_DATA &xf, cv::Point2f shift, std::vector
 
         std::vector<cv::Mat> tmp;
         for (size_t j = 0; j < xf[i].size(); j++) {// for each dimension of the feature, do complex element-wise multiplication
-            tmp.push_back(complexDotMultiplication(complexDotMultiplication(shift_exp_y_mat, xf[i][j]), shift_exp_x_mat));
+            tmp.push_back(ComplexDotMultiplication(ComplexDotMultiplication(shift_exp_y_mat, xf[i][j]), shift_exp_x_mat));
         }
         res.push_back(tmp);
     }

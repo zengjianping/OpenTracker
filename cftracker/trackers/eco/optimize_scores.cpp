@@ -10,7 +10,7 @@ void OptimizeScores::compute_scores() {
     // Do inverse fft to the scores in the Fourier domain back to spacial domain
     for (size_t i = 0; i < scores_fs_.size(); ++i) { // for each scale
         int area = scores_fs_[i].size().area();
-        cv::Mat tmp = dft(fftshift(scores_fs_[i], true, true, true), 1);// inverse dft
+        cv::Mat tmp = dft(fftshift(scores_fs_[i], true, true, true), true);// inverse dft
         sampled_scores.push_back(real(tmp * area)); // spacial domain only contains real part
     }
 
@@ -72,8 +72,8 @@ void OptimizeScores::compute_scores() {
         std::vector<cv::Mat> ky_exp_ky, kx_exp_kx, y_resp, resp_x, grad_y, grad_x;
         std::vector<cv::Mat> ival, H_yy, H_xx, H_xy, det_H;
         for (unsigned int i = 0; i < scores_fs_.size(); i++) {
-            ky_exp_ky.push_back(complexDotMultiplication(kyMat, exp_iky[i]));
-            kx_exp_kx.push_back(complexDotMultiplication(kxMat, exp_ikx[i]));
+            ky_exp_ky.push_back(ComplexDotMultiplication(kyMat, exp_iky[i]));
+            kx_exp_kx.push_back(ComplexDotMultiplication(kxMat, exp_ikx[i]));
         
             y_resp.push_back(exp_iky[i] * scores_fs_[i]);
             resp_x.push_back(scores_fs_[i] * exp_ikx[i]);
@@ -87,8 +87,8 @@ void OptimizeScores::compute_scores() {
             cv::split(ival[i], tmp);
             cv::merge(std::vector<cv::Mat>({-1 * tmp[1], tmp[0]}), ival[i]);
 
-            H_yy.push_back(real(-1 * complexDotMultiplication(ky2Mat, exp_iky[i]) * resp_x[i] + ival[i]));
-            H_xx.push_back(real(-1 * y_resp[i] * complexDotMultiplication(kx2Mat, exp_ikx[i]) + ival[i]));
+            H_yy.push_back(real(-1 * ComplexDotMultiplication(ky2Mat, exp_iky[i]) * resp_x[i] + ival[i]));
+            H_xx.push_back(real(-1 * y_resp[i] * ComplexDotMultiplication(kx2Mat, exp_ikx[i]) + ival[i]));
             H_xy.push_back(real(-1 * ky_exp_ky[i] * (scores_fs_[i] * kx_exp_kx[i])));
 
             det_H.push_back(H_yy[i].mul(H_xx[i]) - H_xy[i].mul(H_xy[i]));

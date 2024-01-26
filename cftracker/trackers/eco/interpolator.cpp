@@ -48,8 +48,7 @@ void Interpolator::get_interp_fourier(cv::Size filter_sz, cv::Mat &interp1_fs,
     interp2_fs = tempT;
 }
 
-cv::Mat Interpolator::cubic_spline_fourier(cv::Mat f, float a)
-{
+cv::Mat Interpolator::cubic_spline_fourier(cv::Mat f, float a) {
     if (f.empty()) {
         assert(0 && "error: input mat is empty!");
     }

@@ -160,7 +160,7 @@ float FeatureComputeInnerProduct(const FEAT_DATA &feat1, const FEAT_DATA &feat2)
     for (size_t i = 0; i < feat1.size(); i++) {
         for (size_t j = 0; j < feat1[i].size(); j++) {
             cv::Mat feat2_conj = mat_conj(feat2[i][j]);
-            dist += mat_sum_f(real(complexDotMultiplication(feat1[i][j], feat2_conj)));
+            dist += mat_sum_f(real(ComplexDotMultiplication(feat1[i][j], feat2_conj)));
         }
     }
     return dist;
@@ -208,8 +208,7 @@ FEAT_DATA FeautreComputePower2(const FEAT_DATA &feats) {
 std::vector<cv::Mat> FeatureComputeScores(const FEAT_DATA &x, const FEAT_DATA &f) {
     std::vector<cv::Mat> res;
     FEAT_DATA res_temp = FeatureDotMultiply(x, f);
-    for (size_t i = 0; i < res_temp.size(); i++) // for each feature
-    {
+    for (size_t i = 0; i < res_temp.size(); i++) {// for each feature
         cv::Mat temp(cv::Mat::zeros(res_temp[i][0].size(), res_temp[i][0].type()));
         for (size_t j = 0; j < res_temp[i].size(); j++) {// for each dimension
             temp = temp + res_temp[i][j];
@@ -246,9 +245,9 @@ FEAT_DATA FeatureVectorMultiply(const FEAT_DATA &x, const std::vector<cv::Mat> &
         std::vector<cv::Mat> temp;
         for (size_t j = 0; j < x[i].size(); j++) {
             if (_conj)
-                temp.push_back(complexDotMultiplication(mat_conj(x[i][j]), y[i]));
+                temp.push_back(ComplexDotMultiplication(mat_conj(x[i][j]), y[i]));
             else
-                temp.push_back(complexDotMultiplication(x[i][j], y[i]));
+                temp.push_back(ComplexDotMultiplication(x[i][j], y[i]));
         }
         res.push_back(temp);
     }
@@ -264,7 +263,7 @@ FEAT_DATA FeatureDotMultiply(const FEAT_DATA &a, const FEAT_DATA &b) {
     for (size_t i = 0; i < a.size(); i++) {
         std::vector<cv::Mat> temp;
         for (size_t j = 0; j < a[i].size(); j++) {
-            temp.push_back(complexDotMultiplication(a[i][j], b[i][j]));
+            temp.push_back(ComplexDotMultiplication(a[i][j], b[i][j]));
         }
         res.push_back(temp);
     }
@@ -279,7 +278,7 @@ FEAT_DATA FeatureDotDivide(const FEAT_DATA &a, const FEAT_DATA &b) {
     for (size_t i = 0; i < a.size(); i++) {
         std::vector<cv::Mat> temp;
         for (size_t j = 0; j < a[i].size(); j++) {
-            temp.push_back(complexDotDivision(a[i][j], b[i][j]));
+            temp.push_back(ComplexDotDivision(a[i][j], b[i][j]));
         }
         res.push_back(temp);
     }

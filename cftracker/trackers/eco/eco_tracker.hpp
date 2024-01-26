@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 
+#include "trackers/base_tracker.hpp"
 #include "eco_parameter.hpp"
 #include "eco_trainer.hpp"
 #include "sample_update.hpp"
@@ -25,17 +26,18 @@
 #include "filters/scale_filter.hpp"
 
 
-namespace cftracker
-{
-class EcoTracker
-{
-public:
-    EcoTracker() {};
-    virtual ~EcoTracker() {}
+namespace cftracker {
 
-    void init(cv::Mat &im, const cv::Rect2f &rect, const EcoParameters &paramters); 
-    bool update(const cv::Mat &frame, cv::Rect2f &roi);
-  
+class EcoTracker : public BaseTracker {
+public:
+    EcoTracker(const std::string config_file);
+    virtual ~EcoTracker();
+
+public:
+    void init(const cv::Mat& frame, const cv::Rect2f& roi) override; 
+    bool update(const cv::Mat& frame, cv::Rect2f& roi) override;
+
+protected:
     void init_parameters(const EcoParameters &parameters);
     void init_features(); 
 #ifdef USE_CAFFE
@@ -53,6 +55,7 @@ public:
 #endif
 
 private:
+    EcoParameters paramters_;
     bool is_color_image_;
     EcoParameters params_;
     cv::Point2f pos_; // final result

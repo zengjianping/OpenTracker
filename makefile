@@ -9,7 +9,7 @@ CAFFE_PATH=/media/elab/sdd/mycodes/caffe
 CC=gcc
 CXX=g++
 
-LDFLAGS= `pkg-config --libs opencv` -lstdc++ -lm
+LDFLAGS= `pkg-config --libs opencv` -lstdc++ -lm -lpthread
 CXXFLAGS= -g -Wall `pkg-config --cflags opencv` -lstdc++ -lm -std=c++0x -O3 -fPIC 
 HEADERS = $(wildcard *.h) *.hpp $(wildcard kcf/*.h) $(wildcard eco/*.h)
 OBJS=kcf/fhog.o \

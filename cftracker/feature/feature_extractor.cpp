@@ -25,11 +25,11 @@ FEAT_DATA FeatureExtractor::extractor(const cv::Mat image, const cv::Point2f pos
 
     int hog_feat_ind = -1;
     std::vector<cv::Mat> hog_feat_maps;
-    int colorspace_feat_ind = -1;
+    //int colorspace_feat_ind = -1;
     std::vector<cv::Mat> colorspace_feat_maps;
     int cn_feat_ind = -1;
     std::vector<cv::Mat> cn_feat_maps;
-    int ic_feat_ind = -1;
+    //int ic_feat_ind = -1;
     std::vector<cv::Mat> ic_feat_maps;
 
 #ifdef USE_CAFFE
@@ -63,7 +63,7 @@ FEAT_DATA FeatureExtractor::extractor(const cv::Mat image, const cv::Point2f pos
         img_input_sz.push_back(cn_features_.img_input_sz);
     }
     if (params.useIcFeature && !is_color_image) {
-        ic_feat_ind = num_features;
+        //ic_feat_ind = num_features;
         num_features++;
         ic_features_ = params.ic_features;
         img_sample_sz.push_back(ic_features_.img_sample_sz);

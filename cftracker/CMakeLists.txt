@@ -12,13 +12,23 @@ option(OPENMP         "use OPENMP"              OFF)
 option(CUDNN          "use CUDNN"               OFF)
 option(MULTI_THREAD   "use MULTI_THREAD"        OFF)
 
-include_directories(${PROJECT_SOURCE_DIR})
-
-message(STATUS "use opencv to compile")    
 find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem iostreams regex)
+find_package(gflags REQUIRED)
+#find_package(glog REQUIRED)
+
 add_definitions(-DOPENCV)
-include_directories(${OpenCV_INCLUDE_DIRS})
-link_directories(${OpenCV_LIB_DIR})
+
+include_directories(
+    ${PROJECT_SOURCE_DIR}
+    ${OpenCV_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+)
+
+link_directories(
+    ${OpenCV_LIBRARY_DIRS}
+    ${Boost_LIBRARY_DIRS}
+)
 
 #0:no-simd;1:sse-Intel;2:neon-TX2;
 set(SIMD 1)
@@ -99,6 +109,8 @@ file(GLOB ALL_LIBRARY_SRCS
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBRARIES})
 
-add_executable(runecotracker.bin ${PROJECT_SOURCE_DIR}/tools/runecotracker.cpp)
-target_link_libraries(runecotracker.bin ${PROJECT_NAME} ${OpenCV_LIBS})
+add_executable(run_tracker.bin ${PROJECT_SOURCE_DIR}/tools/run_tracker.cpp)
+target_link_libraries(run_tracker.bin PRIVATE ${PROJECT_NAME}
+    ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} gflags glog)
+
 

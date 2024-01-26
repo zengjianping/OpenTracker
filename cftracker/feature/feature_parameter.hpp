@@ -83,7 +83,7 @@ struct ColorspaceFeatures {
 
 // only used for Color image
 struct CnParameters {
-    std::string tablename = "look_tables/CNnorm.txt";
+    std::string tablename = "../configs/look_tables/CNnorm.txt";
     float table[32768][10];
     int cell_size = 4;
     int compressed_dim = 3;
@@ -100,7 +100,7 @@ struct CnFeatures {
 
 // only used for gray image
 struct IcParameters {
-    std::string tablename = "look_tables/intensityChannelNorm6";
+    std::string tablename = "../configs/look_tables/intensityChannelNorm6";
     float table[256][5];
     int cell_size = 4;
     int compressed_dim = 3;

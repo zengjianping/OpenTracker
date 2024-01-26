@@ -29,13 +29,13 @@ inline void timerExample() {
 }
 
 inline void timerExampleCV() {
-    double timer = (double)cv::getTickCount();
-    float timedft = 0;
+    //double timer = (double)cv::getTickCount();
+    //float timedft = 0;
 
     // your test code here
 
-    timedft = ((double)cv::getTickCount() - timer) / cv::getTickFrequency();
-    debug("time: %f", timedft);
+    //timedft = ((double)cv::getTickCount() - timer) / cv::getTickFrequency();
+    //debug("time: %f", timedft);
 }
 
 // Show the type of a Mat
@@ -465,6 +465,7 @@ inline void opencvTest()
     printf("opencvTest end=======================================\n");
 }
 
+/*
 inline void absTest() {
     printf("absTest begin=======================================\n");
     std::vector<float> v{0.1, 0.2};
@@ -492,6 +493,7 @@ inline void accumulateTest() {
     debug("True sum:%f", sum);
     printf("accumulateTest end=======================================\n");
 }
+*/
 
 /* Compare the differences of function copyTo() and clone():
 [0, 0, 0, 0, 0]

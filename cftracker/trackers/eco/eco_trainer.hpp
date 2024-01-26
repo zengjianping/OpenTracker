@@ -31,13 +31,12 @@ public:
         FEAT_DATA up_part_;             // this is f + delta(f)
         std::vector<cv::Mat> low_part_; // this is delta(P)
 
-        ECO_EQ operator+(const ECO_EQ data);
-        ECO_EQ operator-(const ECO_EQ data);
-        ECO_EQ operator*(const float scale);
+        ECO_EQ operator+(const ECO_EQ data) const;
+        ECO_EQ operator-(const ECO_EQ data) const;
+        ECO_EQ operator*(const float scale) const;
     };
 
     void train_init(const FEAT_DATA &hf,
-                    const FEAT_DATA &hf_inc,
                     const std::vector<cv::Mat> &proj_matrix,
                     const FEAT_DATA &xlf,
                     const std::vector<cv::Mat> &yf,
@@ -84,19 +83,19 @@ public:
                                    const std::vector<float> &sample_weights);
                                    
     // joint structure basic operation
-    ECO_EQ jointDotDivision(const ECO_EQ &a, const ECO_EQ &b);
+    ECO_EQ joint_dot_division(const ECO_EQ &a, const ECO_EQ &b);
     float inner_product_joint(const ECO_EQ &a, const ECO_EQ &b);
     float inner_product_filter(const FEAT_DATA &a, const FEAT_DATA &b);
-    std::vector<cv::Mat> get_proj() const { return projection_matrix_; }
+    std::vector<cv::Mat> get_proj() const { return proj_matrix_; }
     FEAT_DATA get_hf() const { return hf_; }
 
 private:
-    FEAT_DATA hf_, hf_inc_; // filter parameters and its increament
+    FEAT_DATA hf_; // filter parameters
     FEAT_DATA xlf_, sample_energy_;
     std::vector<cv::Mat> yf_; // the label of sample
     std::vector<cv::Mat> reg_filter_;
     std::vector<float> reg_energy_;
-    std::vector<cv::Mat> projection_matrix_, proj_energy_;
+    std::vector<cv::Mat> proj_matrix_, proj_energy_;
     EcoParameters params_;
     STATE state_;
 };

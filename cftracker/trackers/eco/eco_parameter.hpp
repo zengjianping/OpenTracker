@@ -102,7 +102,7 @@ struct EcoParameters {
 	float min_scale_factor;
 	float max_scale_factor;
 
-	bool debug = 0; // to show heatmap or not
+	bool debug = false; // to show heatmap or not
 
 	// GPU
 	bool use_gpu = true; // whether Caffe use gpu or not

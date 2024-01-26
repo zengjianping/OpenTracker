@@ -108,7 +108,7 @@ cv::Mat dft(const cv::Mat img_org, const bool backwards) {
 }
 
 cv::Mat fftshift(const cv::Mat img_org, const bool rowshift,
-            const bool colshift, const bool reverse) {
+                const bool colshift, const bool reverse) {
     if (img_org.empty())
         return cv::Mat();
 
@@ -176,12 +176,12 @@ cv::Mat magnitude(const cv::Mat img) {
 }
 
 // complex element-wise multiplication for 32Float type
-cv::Mat complexDotMultiplication(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexDotMultiplication(const cv::Mat &a, const cv::Mat &b) {
     cv::Mat res;
 #ifdef USE_SIMD
     res = complexDotMultiplicationSIMD(a, b);
 #else
-    res = complexDotMultiplicationCPU(a, b);
+    res = ComplexDotMultiplicationCPU(a, b);
 #endif
     return res;
 }
@@ -305,7 +305,7 @@ cv::Mat complexDotMultiplicationSIMD(const cv::Mat &a, const cv::Mat &b) {
 }
 #endif
 
-cv::Mat complexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
     cv::Mat temp_a;
     cv::Mat temp_b;
     a.copyTo(temp_a);
@@ -335,7 +335,7 @@ cv::Mat complexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
 }
 
 // complex element-wise division
-cv::Mat complexDotDivision(const cv::Mat a, const cv::Mat b) {
+cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b) {
     std::vector<cv::Mat> pa;
     std::vector<cv::Mat> pb;
     cv::split(a, pa);
@@ -353,7 +353,7 @@ cv::Mat complexDotDivision(const cv::Mat a, const cv::Mat b) {
 }
 
 // the mulitiplciation of two complex matrix
-cv::Mat complexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b) {
     if (a.empty() || b.empty())
         return a;
 
@@ -377,7 +377,7 @@ cv::Mat complexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b) {
 }
 
 // impliment matlab c = convn(a,b) and convn(a, b, 'valid')
-cv::Mat complexConvolution(const cv::Mat a_input, const cv::Mat b_input, const bool valid) {
+cv::Mat ComplexConvolution(const cv::Mat a_input, const cv::Mat b_input, const bool valid) {
     cv::Mat res;
     cv::Mat a_temp, a, b;
 
