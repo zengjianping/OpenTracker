@@ -3,8 +3,8 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 #include <opencv2/opencv.hpp>
-#include "trackers/base_tracker.hpp"
-#include "common/metrics.hpp"
+#include "cftracker/trackers/base_tracker.hpp"
+#include "cftracker/common/metrics.hpp"
 
 using namespace cftracker;
 
@@ -146,12 +146,51 @@ protected:
 };
 
 
-DEFINE_string(video_path, "../datas/sequences/Crossing", "video path.");
-DEFINE_string(config_file, "../configs/tracker_config_eco.yaml", "configuration file.");
+DEFINE_string(video_path, "datas/sequences/Crossing", "video path.");
+DEFINE_string(tracker_name, "ECO", "tracker algorithm type.");
+DEFINE_string(tracker_config, "configs/tracker_config_eco.yaml", "configuration file.");
+DEFINE_bool(select_roi, false, "Whether to select target region.");
+
+std::map<std::string, BaseTracker::Type> tracker_type_map = {
+    {"ECO", BaseTracker::ECO}
+};
 
 int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     google::ParseCommandLineFlags(&argc, &argv, true);
+
+    std::string video_path = FLAGS_video_path;
+    std::string tracker_name = FLAGS_tracker_name;
+    std::string tracker_config = FLAGS_tracker_config;
+    bool select_roi = FLAGS_select_roi;
+
+    // Read the groundtruth bbox
+    VideoReader video_reader = VideoReader(video_path.c_str());
+    if (!video_reader.IsOpened()) {
+        std::cout << "Failed to open video!" << std::endl;
+        return -1;
+    }
+
+    if (tracker_type_map.find(tracker_name) == tracker_type_map.end()) {
+        std::cout << "Unsupport tracker type!" << std::endl;
+        return -1;
+    }
+    BaseTracker::Type tracker_type = tracker_type_map[tracker_name];
+
+    std::shared_ptr<BaseTracker> tracker = BaseTracker::CreateInstance(tracker_type, tracker_config);
+    if (!tracker.get()) {
+        std::cout << "Failed to create tracker!" << std::endl;
+        return -1;
+    }
+
+    cv::Rect2f gt_bbox, *p_gt_bbox = nullptr;
+    if (video_reader.HasGroundTruth() && !select_roi)
+        p_gt_bbox = &gt_bbox;
+    cv::Rect2f init_bbox, updated_bbox, tracked_bbox;
+    cv::Mat frame, frame_draw;
+    double time_begin, time_init, time_update, time_track;
+    bool track_initialized = false;
+    int num_frames = 0, num_updated_frames = 0;;
 
     std::vector<float> m_errors;
     std::vector<float> m_ious;
@@ -161,28 +200,6 @@ int main(int argc, char **argv) {
     float avg_iou = 0.0f;
     float avg_time = 0.0f;
     Metrics metrics;
-
-    // Read the groundtruth bbox
-    std::string video_path = FLAGS_video_path;
-    VideoReader video_reader = VideoReader(video_path.c_str());
-    if (!video_reader.IsOpened()) {
-        std::cout << "Failed to open video!" << std::endl;
-        return -1;
-    }
-
-    std::string config_file = FLAGS_config_file;
-    std::shared_ptr<BaseTracker> tracker = BaseTracker::CreateInstance(BaseTracker::ECO, config_file);
-    if (!tracker.get()) {
-        std::cout << "Failed to create tracker!" << std::endl;
-        return -1;
-    }
-
-    cv::Rect2f gt_bbox, *p_gt_bbox = nullptr; //video_reader.HasGroundTruth() ? &gt_bbox : nullptr;
-    cv::Rect2f init_bbox, updated_bbox, tracked_bbox;
-    cv::Mat frame, frame_draw;
-    double time_begin, time_init, time_update, time_track;
-    bool track_initialized = false;
-    int num_frames = 0, num_updated_frames = 0;;
 
     while (true) {
         if (!video_reader.Retrieve(frame, p_gt_bbox)) {
