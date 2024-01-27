@@ -32,7 +32,7 @@ link_directories(
 )
 
 # 0:no-simd; 1:sse; 2:neon;
-set(SIMD 1)
+set(SIMD 0)
 if(SIMD EQUAL 1)
     message(STATUS "use sse-Intel to compile")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4")
@@ -43,7 +43,7 @@ elseif(SIMD EQUAL 2)
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto -mfpu=neon")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto")
     add_definitions(-DUSE_SIMD)
-    add_definitions(-DUSE_NENOS)
+    add_definitions(-DUSE_NEON)
 elseif(SIMD EQUAL 0)
     message(STATUS "no-simd to compile")
 endif()
