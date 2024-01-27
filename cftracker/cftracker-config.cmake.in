@@ -1,0 +1,28 @@
+#  Usage from an external project:
+#    In your CMakeLists.txt, add these lines:
+#
+#    find_package(cftracker REQUIRED)
+#    target_link_libraries(MY_TARGET_NAME PUBLIC cftracker)
+
+@PACKAGE_INIT@
+
+set_and_check(CFTRACKER_CMAKE_DIR "@PACKAGE_CFTRACKER_CMAKE_DIR@")
+
+if (cftracker_FIND_QUIETLY)
+    set(QUIET_OR_REQUIRED_OPTION "QUIET")
+elseif (cftracker_FIND_REQUIRED)
+    set(QUIET_OR_REQUIRED_OPTION "REQUIRED")
+else ()
+   set(QUIET_OR_REQUIRED_OPTION "")
+endif()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CFTRACKER_CMAKE_DIR}/modules)
+
+if (WIN32)
+    find_package(glog REQUIRED)
+endif()
+find_package(gflags ${QUIET_OR_REQUIRED_OPTION})
+
+include("${CFTRACKER_CMAKE_DIR}/CfTrackerTargets.cmake")
+
+unset(QUIET_OR_REQUIRED_OPTION)

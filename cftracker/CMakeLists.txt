@@ -15,7 +15,9 @@ option(MULTI_THREAD   "use MULTI_THREAD"        OFF)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem iostreams regex)
 find_package(gflags REQUIRED)
-#find_package(glog REQUIRED)
+if (WIN32)
+    find_package(glog REQUIRED)
+endif()
 
 add_definitions(-DOPENCV)
 
@@ -86,31 +88,80 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -pthread -Wall -lstdc++ -std=c++11")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
+#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/binaries")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/binaries")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/binaries")
 
 file(GLOB ALL_LIBRARY_HDRS
-    ${PROJECT_SOURCE_DIR}/common/*.hpp
-    ${PROJECT_SOURCE_DIR}/feature/*.hpp
-    ${PROJECT_SOURCE_DIR}/filters/*.hpp
-    ${PROJECT_SOURCE_DIR}/trackers/*.hpp
-    ${PROJECT_SOURCE_DIR}/trackers/eco/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/common/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/feature/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/filters/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/eco/*.hpp
 )
 
 file(GLOB ALL_LIBRARY_SRCS
-    ${PROJECT_SOURCE_DIR}/common/*.cpp
-    ${PROJECT_SOURCE_DIR}/feature/*.cpp
-    ${PROJECT_SOURCE_DIR}/filters/*.cpp
-    ${PROJECT_SOURCE_DIR}/trackers/*.cpp
-    ${PROJECT_SOURCE_DIR}/trackers/eco/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/common/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/feature/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/filters/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/eco/*.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBRARIES})
 
-add_executable(run_tracker.bin ${PROJECT_SOURCE_DIR}/tools/run_tracker.cpp)
-target_link_libraries(run_tracker.bin PRIVATE ${PROJECT_NAME}
+add_executable(run_tracker.bin ${PROJECT_SOURCE_DIR}/examples/run_tracker.cpp)
+target_link_libraries(run_tracker.bin PUBLIC ${PROJECT_NAME}
     ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} gflags glog)
 
+set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install")
 
+install(
+    TARGETS ${PROJECT_NAME} run_tracker.bin
+    EXPORT CfTrackerExport
+    ARCHIVE DESTINATION binaries
+    LIBRARY DESTINATION binaries
+    RUNTIME DESTINATION binaries
+)
+
+set(INSTALL_HDRS
+    ${PROJECT_SOURCE_DIR}/cftracker/common/common.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/base_tracker.hpp
+)
+
+foreach(HDR ${INSTALL_HDRS})
+  file(RELATIVE_PATH REL_FIL ${PROJECT_SOURCE_DIR} ${HDR})
+  get_filename_component(DIR ${REL_FIL} DIRECTORY)
+  install(
+    FILES ${HDR}
+    DESTINATION include/${DIR}
+  )
+endforeach()
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/configs DESTINATION configs)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/datas DESTINATION datas)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/models DESTINATION models)
+
+set(CFTRACKER_CMAKE_DIR share/cftracker/cmake)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  cftracker-config.cmake.in
+  ${PROJECT_BINARY_DIR}/cmake/cftracker/cftracker-config.cmake
+  PATH_VARS CFTRACKER_CMAKE_DIR
+  INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cftracker
+)
+
+install(
+  EXPORT CfTrackerExport
+  DESTINATION share/cftracker/cmake/
+  FILE CfTrackerTargets.cmake
+)
+
+install(
+  FILES ${PROJECT_BINARY_DIR}/cmake/cftracker/cftracker-config.cmake
+  DESTINATION share/cftracker/
+)
