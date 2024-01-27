@@ -163,7 +163,7 @@ void ReadDatasets::IniRead(cv::Rect2f &bboxGroundtruth, cv::Mat &frame)
     bboxGroundtruth.width = w;
     bboxGroundtruth.height = h;
 
-    frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+    frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
     if (!frame.data)
     {
         cout << "Could not open or find the image" << std::endl;
@@ -296,5 +296,5 @@ void ReadDatasets::ReadNextFrame(Rect2f &bboxGroundtruth, cv::Mat &frame)
     bboxGroundtruth.y = y;
     bboxGroundtruth.width = w;
     bboxGroundtruth.height = h;
-    frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+    frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
 }

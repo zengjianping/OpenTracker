@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	ostringstream osfile;
 	osfile << path << "/img/" << setw(5) << setfill('0') << f <<".jpg";
 	cout << osfile.str() << endl;
-    cv::Mat frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+    cv::Mat frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
     if(! frame.data )
     {
         cout <<  "Could not open or find the image" << std::endl ;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 		osfile.str("");
 		osfile << path << "/img/" << setw(5) << setfill('0') << f <<".jpg";
 		cout << osfile.str() << endl;
-    	frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+    	frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
 		// Read next bbox
 		getline(groundtruth, s, ',');	
 		f = atoi(s.c_str());

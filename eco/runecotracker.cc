@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 
     Rect2f bboxGroundtruth(x, y, w, h);
 
-    cv::Mat frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+    cv::Mat frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
     cv::Mat frameDraw;
     frame.copyTo(frameDraw);
     if (!frame.data)
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
         bboxGroundtruth.y = y;
         bboxGroundtruth.width = w;
         bboxGroundtruth.height = h;
-        frame = cv::imread(osfile.str().c_str(), CV_LOAD_IMAGE_UNCHANGED);
+        frame = cv::imread(osfile.str().c_str(), cv::IMREAD_UNCHANGED);
         if(!frame.data)
         {
             break;

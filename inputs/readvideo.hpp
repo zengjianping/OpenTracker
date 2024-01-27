@@ -23,18 +23,18 @@ public:
   {
     switch (event)
     {
-    case CV_EVENT_LBUTTONDOWN:
+    case cv::EVENT_LBUTTONDOWN:
       drawing_now_flag_ = true;
       bbox_ = cv::Rect(x, y, 0, 0);
       break;
-    case CV_EVENT_MOUSEMOVE:
+    case cv::EVENT_MOUSEMOVE:
       if (drawing_now_flag_)
       {
         bbox_.width = x - bbox_.x;
         bbox_.height = y - bbox_.y;
       }
       break;
-    case CV_EVENT_LBUTTONUP:
+    case cv::EVENT_LBUTTONUP:
       drawing_now_flag_ = false;
       if (bbox_.width < 0)
       {

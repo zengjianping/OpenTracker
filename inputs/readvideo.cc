@@ -11,8 +11,8 @@ void ReadVideo::IniRead(cv::Rect2f &bboxGroundtruth, cv::Mat &frame, std::string
 	ReadVideo::bbox_get_flag_ = false;
 	//bool flag = false;
 	// Register mouse callback
-	cvNamedWindow(window_name.c_str(), CV_WINDOW_AUTOSIZE);
-	cvSetMouseCallback(window_name.c_str(), ReadVideo::mouseHandler, NULL);
+	cv::namedWindow(window_name.c_str(), cv::WINDOW_AUTOSIZE);
+	cv::setMouseCallback(window_name.c_str(), ReadVideo::mouseHandler, NULL);
 	
 	cv::Mat temp;
 	frame.copyTo(temp);
@@ -21,7 +21,7 @@ void ReadVideo::IniRead(cv::Rect2f &bboxGroundtruth, cv::Mat &frame, std::string
 		rectangle(frame, bbox_, cv::Scalar(0, 0, 255), 1);
 		cv::imshow(window_name, frame);
 		temp.copyTo(frame);
-		int c = cvWaitKey(1);
+		int c = cv::waitKey(1);
 		if (c == 27)
 			break;
 		if (c == 65)
@@ -34,7 +34,7 @@ void ReadVideo::IniRead(cv::Rect2f &bboxGroundtruth, cv::Mat &frame, std::string
 		}
 	}
 	// Remove callback
-	cvSetMouseCallback(window_name.c_str(), NULL, NULL);
+	cv::setMouseCallback(window_name.c_str(), NULL, NULL);
 	printf("bbox:%d, %d, %d, %d\n", bbox_.x, bbox_.y, bbox_.width, bbox_.height);
 	bboxGroundtruth.x = bbox_.x;
 	bboxGroundtruth.y = bbox_.y;

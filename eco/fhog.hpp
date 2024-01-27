@@ -111,7 +111,7 @@ typedef struct
 // Getting feature map for the selected subimage  
 //
 // API
-// int getFeatureMaps(const IplImage * image, const int k, featureMap **map);
+// int getFeatureMaps(const cv::Mat& image, const int k, featureMap **map);
 // INPUT
 // image             - selected subimage
 // k                 - size of cells
@@ -120,7 +120,7 @@ typedef struct
 // RESULT
 // Error status
 */
-int getFeatureMaps(const IplImage *image, const int k,
+int getFeatureMaps(const cv::Mat& image, const int k,
                    CvLSVMFeatureMapCaskade **map);
 
 /*

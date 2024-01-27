@@ -226,12 +226,12 @@ int main(int argc, char **argv)
         //cvNamedWindow("Tracking", CV_WINDOW_NORMAL);
         imshow("OpenTracker", frameDraw);
 
-        int c = cvWaitKey(1);
+        int c = cv::waitKey(1);
         if (c != -1)
             c = c % 256;
         if (c == 27)
         {
-            cvDestroyWindow("OpenTracker");
+            cv::destroyWindow("OpenTracker");
             return 0;
         }
         waitKey(1);
@@ -254,6 +254,6 @@ int main(int argc, char **argv)
          exit(-1);
     }
 #endif
-    cvDestroyWindow("OpenTracker");
+    cv::destroyWindow("OpenTracker");
     return 0;
 }

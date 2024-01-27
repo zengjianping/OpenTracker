@@ -166,7 +166,7 @@ cv::Mat FeatureExtractor::sample_patch(const cv::Mat im,
 				   pos.y - floor((sample_sz.height + 1) / 2));
 	//debug("new_im:%d x %d, pos2:%d %d, sample_sz:%f x %f", new_im.rows, new_im.cols, pos2.y, pos2.x, sample_sz.height, sample_sz.width);
 
-	cv::Mat im_patch = subwindow(new_im, cv::Rect(pos2, sample_sz), IPL_BORDER_REPLICATE);
+	cv::Mat im_patch = subwindow(new_im, cv::Rect(pos2, sample_sz), cv::BORDER_REPLICATE);
 
 	cv::Mat resized_patch;
 	if (im_patch.cols == 0 || im_patch.rows == 0)
@@ -361,9 +361,8 @@ vector<cv::Mat> FeatureExtractor::get_hog_features(const vector<cv::Mat> ims)
 		}
 		ims_f.copyTo(featurePaddingMat);
 
-		IplImage zz = cvIplImage(featurePaddingMat);
 		CvLSVMFeatureMapCaskade *map_temp;
-		getFeatureMaps(&zz, _cell_size, &map_temp); // dimension: 27
+		getFeatureMaps(featurePaddingMat, _cell_size, &map_temp); // dimension: 27
 		normalizeAndTruncate(map_temp, 0.2f);		// dimension: 108
 		PCAFeatureMaps(map_temp);					// dimension: 31
 
