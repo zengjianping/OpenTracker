@@ -142,9 +142,10 @@ foreach(HDR ${INSTALL_HDRS})
   )
 endforeach()
 
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/configs DESTINATION configs)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/datas DESTINATION datas)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/models DESTINATION models)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/configs DESTINATION .)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/datas DESTINATION .)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/models DESTINATION .)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/scripts DESTINATION .)
 
 set(CFTRACKER_CMAKE_DIR share/cftracker/cmake)
 include(CMakePackageConfigHelpers)
@@ -165,3 +166,4 @@ install(
   FILES ${PROJECT_BINARY_DIR}/cmake/cftracker/cftracker-config.cmake
   DESTINATION share/cftracker/
 )
+
