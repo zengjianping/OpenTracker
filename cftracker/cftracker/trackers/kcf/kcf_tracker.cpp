@@ -595,7 +595,7 @@ cv::Mat KcfTracker::getFeatures(const cv::Mat &image, bool inithann, float scale
         // Lab features
         if (_labfeatures) {
             cv::Mat imgLab;
-            cvtColor(z, imgLab, CV_BGR2Lab);
+            cvtColor(z, imgLab, cv::COLOR_BGR2Lab);
             unsigned char *input = (unsigned char *)(imgLab.data);
 
             // Sparse output vector
@@ -747,7 +747,7 @@ void KcfTracker::train_dsst(cv::Mat image, bool ini) {
     // Get Sigma{FF} in the paper (delta B)
     cv::Mat new_den_dsst;
     cv::mulSpectrums(samples, samples, new_den_dsst, 0, true);
-    cv::reduce(real(new_den_dsst), new_den_dsst, 0, CV_REDUCE_SUM);
+    cv::reduce(real(new_den_dsst), new_den_dsst, 0, cv::REDUCE_SUM);
 
     if (ini) {
         _den_dsst = new_den_dsst;
@@ -766,7 +766,7 @@ cv::Point2i KcfTracker::detect_dsst(cv::Mat image) {
 
     // Compute AZ in the paper
     cv::Mat add_temp;
-    cv::reduce(ComplexDotMultiplication(_num_dsst, samples), add_temp, 0, CV_REDUCE_SUM);
+    cv::reduce(ComplexDotMultiplication(_num_dsst, samples), add_temp, 0, cv::REDUCE_SUM);
 
     // compute the final y, DSST (6);
     cv::Mat scale_response;

@@ -564,17 +564,17 @@ bool EcoTracker::update(const cv::Mat& frame, cv::Rect2f& roi) {
         cv::circle(resframe, pos_, 5, cv::Scalar(0, 255, 0));
         cv::circle(resframe, sample_pos, 5, cv::Scalar(0, 255, 225));
 
-        cv::imshow("OpenTracker", resframe);
+        cv::imshow("debug", resframe);
 
         if (scores.get_max_score() < params_.max_score_threshhold) {
-            cvWaitKey(0);
+            cv::waitKey(0);
         }
 
-        int c = cvWaitKey(1);
+        int c = cv::waitKey(1);
         if (c != -1)
             c = c % 256;
         if (c == 27) {
-            cvDestroyWindow("OpenTracker");
+            cv::destroyWindow("debug");
             exit(1);
         }
         //cv::waitKey(0);
@@ -981,9 +981,9 @@ FEAT_DATA EcoTracker::interpolate_dft(const FEAT_DATA &xlf, std::vector<cv::Mat>
     FEAT_DATA result;
     for (size_t i = 0; i < xlf.size(); i++) {
         cv::Mat interp1_fs_mat =
-            subwindow(interp1_fs[i], cv::Rect(cv::Point(0, 0), cv::Size(interp1_fs[i].rows, interp1_fs[i].rows)), IPL_BORDER_REPLICATE);
+            subwindow(interp1_fs[i], cv::Rect(cv::Point(0, 0), cv::Size(interp1_fs[i].rows, interp1_fs[i].rows)), cv::BORDER_REPLICATE);
         cv::Mat interp2_fs_mat =
-            subwindow(interp2_fs[i], cv::Rect(cv::Point(0, 0), cv::Size(interp2_fs[i].cols, interp2_fs[i].cols)), IPL_BORDER_REPLICATE);
+            subwindow(interp2_fs[i], cv::Rect(cv::Point(0, 0), cv::Size(interp2_fs[i].cols, interp2_fs[i].cols)), cv::BORDER_REPLICATE);
 
         std::vector<cv::Mat> temp;
         for (size_t j = 0; j < xlf[i].size(); j++) {
@@ -1052,9 +1052,9 @@ FEAT_DATA EcoTracker::shift_sample(FEAT_DATA &xf, cv::Point2f shift, std::vector
         }
 
         cv::Mat shift_exp_y_mat =
-            subwindow(shift_exp_y, cv::Rect(cv::Point(0, 0), xf[i][0].size()), IPL_BORDER_REPLICATE);
+            subwindow(shift_exp_y, cv::Rect(cv::Point(0, 0), xf[i][0].size()), cv::BORDER_REPLICATE);
         cv::Mat shift_exp_x_mat =
-            subwindow(shift_exp_x, cv::Rect(cv::Point(0, 0), xf[i][0].size()), IPL_BORDER_REPLICATE);
+            subwindow(shift_exp_x, cv::Rect(cv::Point(0, 0), xf[i][0].size()), cv::BORDER_REPLICATE);
 
         std::vector<cv::Mat> tmp;
         for (size_t j = 0; j < xf[i].size(); j++) {// for each dimension of the feature, do complex element-wise multiplication

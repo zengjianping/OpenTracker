@@ -100,7 +100,7 @@ public:
 
     double GetFps() {
         if (input_mode_ == 0) {
-            return video_capture_.get(CV_CAP_PROP_FPS);
+            return video_capture_.get(cv::CAP_PROP_FPS);
         }
         else if (input_mode_ == 1) {
             return 1.0;
@@ -110,7 +110,7 @@ public:
 
     double GetProgress() {
         if (input_mode_ == 0) {
-            return video_capture_.get(CV_CAP_PROP_POS_MSEC);
+            return video_capture_.get(cv::CAP_PROP_POS_MSEC);
         }
         else if (input_mode_ == 1) {
             return 1.0;
@@ -121,7 +121,7 @@ public:
     void SetProgress(double time_ms) {
         if (input_mode_ == 0) {
             //video_capture_.set(cv::CAP_PROP_POS_MSEC, time_ms);
-            video_capture_.set(CV_CAP_PROP_POS_FRAMES, time_ms/1000*video_capture_.get(CV_CAP_PROP_FPS));
+            video_capture_.set(cv::CAP_PROP_POS_FRAMES, time_ms/1000*video_capture_.get(cv::CAP_PROP_FPS));
         }
         else if (input_mode_ == 1) {
         }
