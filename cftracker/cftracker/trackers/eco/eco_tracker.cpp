@@ -12,7 +12,7 @@
 
 namespace cftracker {
 
-EcoTracker::EcoTracker(const std::string config_file)
+EcoTracker::EcoTracker(const std::string& config_file)
         : BaseTracker() {
     paramters_;
 }

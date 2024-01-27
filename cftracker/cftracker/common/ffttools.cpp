@@ -13,6 +13,19 @@
 
 namespace cftracker {
 
+cv::Mat dft_d(cv::Mat img, bool backwards, bool byRow) {
+    if (img.channels() == 1) {
+        cv::Mat planes[] = {cv::Mat_<float>(img), cv::Mat_<float>::zeros(img.size())};
+        cv::merge(planes, 2, img);
+    }
+    if (byRow)
+        cv::dft(img, img, (cv::DFT_ROWS | cv::DFT_COMPLEX_OUTPUT));
+    else
+        cv::dft(img, img, backwards ? (cv::DFT_INVERSE | cv::DFT_SCALE) : 0); //do scale when ifft;
+
+    return img;
+}
+
 cv::Mat dft(const cv::Mat img_org, const bool backwards) {
     if (img_org.empty())
         return cv::Mat();
@@ -333,12 +346,29 @@ cv::Mat ComplexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
     return res;
 }
 
+cv::Mat ComplexDotMultiplication2(cv::Mat a, cv::Mat b) {
+    std::vector<cv::Mat> pa;
+    std::vector<cv::Mat> pb;
+    cv::split(a, pa);
+    cv::split(b, pb);
+
+    std::vector<cv::Mat> pres;
+    pres.push_back(pa[0].mul(pb[0]) - pa[1].mul(pb[1]));
+    pres.push_back(pa[0].mul(pb[1]) + pa[1].mul(pb[0]));
+
+    cv::Mat res;
+    cv::merge(pres, res);
+
+    return res;
+}
+
 // complex element-wise division
 cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b) {
     std::vector<cv::Mat> pa;
     std::vector<cv::Mat> pb;
     cv::split(a, pa);
     cv::split(b, pb);
+
     // Opencv if divide by ZERO, result is ZERO!
     cv::Mat divisor = 1. / (pb[0].mul(pb[0]) + pb[1].mul(pb[1]));
     //(a0+ia1)/(b0+ib1)=[(a0b0+a1b1)+i(a1b0-a0b1)] / divisor
@@ -348,6 +378,22 @@ cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b) {
 
     cv::Mat res;
     cv::merge(pres, res);
+
+    return res;
+}
+
+cv::Mat complexDotDivisionReal(cv::Mat a, cv::Mat b) {
+    std::vector<cv::Mat> pa;
+    cv::split(a, pa);
+
+    std::vector<cv::Mat> pres;
+    cv::Mat divisor = 1. / b;
+    pres.push_back(pa[0].mul(divisor));
+    pres.push_back(pa[1].mul(divisor));
+
+    cv::Mat res;
+    cv::merge(pres, res);
+
     return res;
 }
 
@@ -514,6 +560,32 @@ void rot90(cv::Mat &matImage, int rotflag) {
     else if (rotflag != 0) { // 0: keep the same
         assert(0 && "error: unknown rotation flag!");
     }
+}
+
+//KCF page 11 Figure 6
+void rearrange(cv::Mat &img) {
+    // img = img(cv::Rect(0, 0, img.cols & -2, img.rows & -2));
+    int cx = img.cols / 2;
+    int cy = img.rows / 2;
+
+    cv::Mat q0(img, cv::Rect(0, 0, cx, cy));   // Top-Left - Create a ROI per quadrant
+    cv::Mat q1(img, cv::Rect(cx, 0, cx, cy));  // Top-Right
+    cv::Mat q2(img, cv::Rect(0, cy, cx, cy));  // Bottom-Left
+    cv::Mat q3(img, cv::Rect(cx, cy, cx, cy)); // Bottom-Right
+
+    cv::Mat tmp; // swap quadrants (Top-Left with Bottom-Right)
+    q0.copyTo(tmp);
+    q3.copyTo(q0);
+    tmp.copyTo(q3);
+    q1.copyTo(tmp); // swap quadrant (Top-Right with Bottom-Left)
+    q2.copyTo(q1);
+    tmp.copyTo(q2);
+}
+
+void normalizedLogTransform(cv::Mat &img) {
+    img = cv::abs(img);
+    img += cv::Scalar::all(1);
+    cv::log(img, img);
 }
 
 } // namespace cftracker

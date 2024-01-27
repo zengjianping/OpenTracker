@@ -152,7 +152,9 @@ DEFINE_string(tracker_config, "configs/tracker_config_eco.yaml", "configuration 
 DEFINE_bool(select_roi, false, "Whether to select target region.");
 
 std::map<std::string, BaseTracker::Type> tracker_type_map = {
-    {"ECO", BaseTracker::ECO}
+    {"ECO", BaseTracker::ECO},
+    {"KCF", BaseTracker::KCF},
+    {"DSST", BaseTracker::DSST}
 };
 
 int main(int argc, char **argv) {

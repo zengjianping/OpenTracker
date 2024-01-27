@@ -95,6 +95,7 @@ file(GLOB ALL_LIBRARY_HDRS
     ${PROJECT_SOURCE_DIR}/cftracker/filters/*.hpp
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/*.hpp
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/eco/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/kcf/*.hpp
 )
 
 file(GLOB ALL_LIBRARY_SRCS
@@ -103,6 +104,7 @@ file(GLOB ALL_LIBRARY_SRCS
     ${PROJECT_SOURCE_DIR}/cftracker/filters/*.cpp
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/*.cpp
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/eco/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/trackers/kcf/*.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})

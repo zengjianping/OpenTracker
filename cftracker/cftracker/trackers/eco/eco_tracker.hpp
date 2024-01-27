@@ -21,7 +21,7 @@ namespace cftracker {
 
 class EcoTracker : public BaseTracker {
 public:
-    EcoTracker(const std::string config_file);
+    EcoTracker(const std::string& config_file);
     virtual ~EcoTracker();
 
 public:
