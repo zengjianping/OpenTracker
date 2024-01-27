@@ -309,9 +309,8 @@ std::vector<cv::Mat> get_hog_features_cpu(const std::vector<cv::Mat> ims, int _c
         }
         ims_f.copyTo(featurePaddingMat);
 
-        IplImage zz = cvIplImage(featurePaddingMat);
         CvLSVMFeatureMapCaskade *map_temp;
-        getFeatureMaps(&zz, _cell_size, &map_temp); // dimension: 27
+        getFeatureMaps(featurePaddingMat, _cell_size, &map_temp); // dimension: 27
         normalizeAndTruncate(map_temp, 0.2f);       // dimension: 108
         PCAFeatureMaps(map_temp);                   // dimension: 31
 

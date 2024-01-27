@@ -580,9 +580,8 @@ cv::Mat KcfTracker::getFeatures(const cv::Mat &image, bool inithann, float scale
 
     // HOG features
     if (_hogfeatures) {
-        IplImage z_ipl = cvIplImage(z);
         CvLSVMFeatureMapCaskade *map;
-        getFeatureMaps(&z_ipl, cell_size, &map);
+        getFeatureMaps(z, cell_size, &map);
         normalizeAndTruncate(map, 0.2f);
         PCAFeatureMaps(map);
         _size_patch[0] = map->sizeY;
@@ -821,8 +820,7 @@ cv::Mat KcfTracker::get_sample_dsst(const cv::Mat &image) {
         //printf("%d, %d \n", im_patch_resized.cols, im_patch_resized.rows);
         //printf("%d, %d \n", im_patch.cols, im_patch.rows);
         // Compute the FHOG features for the subwindow
-        IplImage im_ipl = cvIplImage(im_patch_resized);
-        getFeatureMaps(&im_ipl, cell_size, &map[i]);
+        getFeatureMaps(im_patch_resized, cell_size, &map[i]);
         normalizeAndTruncate(map[i], 0.2f);
         PCAFeatureMaps(map[i]);
 
