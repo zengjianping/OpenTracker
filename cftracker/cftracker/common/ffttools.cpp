@@ -2,8 +2,8 @@
 #include "cftracker/common/debug.hpp"
 
 #ifdef USE_SIMD
-#include "sse.hpp"
-#include "wrappers.hpp"
+#include "cftracker/common/simd/sse.hpp"
+#include "cftracker/common/simd/wrappers.hpp"
 #endif
 
 #ifdef USE_FFTW
@@ -26,7 +26,7 @@ cv::Mat dft_d(cv::Mat img, bool backwards, bool byRow) {
     return img;
 }
 
-cv::Mat dft(const cv::Mat img_org, const bool backwards) {
+cv::Mat dft(const cv::Mat& img_org, const bool backwards) {
     if (img_org.empty())
         return cv::Mat();
 
@@ -119,8 +119,8 @@ cv::Mat dft(const cv::Mat img_org, const bool backwards) {
     return img;
 }
 
-cv::Mat fftshift(const cv::Mat img_org, const bool rowshift,
-                const bool colshift, const bool reverse) {
+cv::Mat fftshift(const cv::Mat& img_org, const bool rowshift,
+                 const bool colshift, const bool reverse) {
     if (img_org.empty())
         return cv::Mat();
 
@@ -160,21 +160,21 @@ cv::Mat fftshift(const cv::Mat img_org, const bool rowshift,
 }
 
 // take the real part of a complex img
-cv::Mat real(const cv::Mat img) {
+cv::Mat real(const cv::Mat& img) {
     std::vector<cv::Mat> planes;
     cv::split(img, planes);
     return planes[0];
 }
 
 // take the image part of a complex img
-cv::Mat imag(const cv::Mat img) {
+cv::Mat imag(const cv::Mat& img) {
     std::vector<cv::Mat> planes;
     cv::split(img, planes);
     return planes[1];
 }
 
 // calculate the magnitde of a complex img
-cv::Mat magnitude(const cv::Mat img) {
+cv::Mat magnitude(const cv::Mat& img) {
     cv::Mat res;
     std::vector<cv::Mat> planes;
     cv::split(img, planes);
@@ -187,19 +187,8 @@ cv::Mat magnitude(const cv::Mat img) {
     return res;
 }
 
-// complex element-wise multiplication for 32Float type
-cv::Mat ComplexDotMultiplication(const cv::Mat &a, const cv::Mat &b) {
-    cv::Mat res;
 #ifdef USE_SIMD
-    res = complexDotMultiplicationSIMD(a, b);
-#else
-    res = ComplexDotMultiplicationCPU(a, b);
-#endif
-    return res;
-}
-
-#ifdef USE_SIMD
-cv::Mat complexDotMultiplicationSIMD(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexDotMultiplicationSIMD(const cv::Mat& a, const cv::Mat& b) {
     if (a.rows != b.rows || a.cols != b.cols)     {
         assert(0 && "Error: Mat a and b different size!");
     }
@@ -317,7 +306,7 @@ cv::Mat complexDotMultiplicationSIMD(const cv::Mat &a, const cv::Mat &b) {
 }
 #endif
 
-cv::Mat ComplexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexDotMultiplicationCPU(const cv::Mat& a, const cv::Mat& b) {
     cv::Mat temp_a;
     cv::Mat temp_b;
     a.copyTo(temp_a);
@@ -346,7 +335,18 @@ cv::Mat ComplexDotMultiplicationCPU(const cv::Mat &a, const cv::Mat &b) {
     return res;
 }
 
-cv::Mat ComplexDotMultiplication2(cv::Mat a, cv::Mat b) {
+// complex element-wise multiplication for 32Float type
+cv::Mat ComplexDotMultiplication(const cv::Mat& a, const cv::Mat& b) {
+    cv::Mat res;
+#ifdef USE_SIMD
+    res = ComplexDotMultiplicationSIMD(a, b);
+#else
+    res = ComplexDotMultiplicationCPU(a, b);
+#endif
+    return res;
+}
+
+cv::Mat ComplexDotMultiplication2(const cv::Mat& a, const cv::Mat& b) {
     std::vector<cv::Mat> pa;
     std::vector<cv::Mat> pb;
     cv::split(a, pa);
@@ -363,7 +363,7 @@ cv::Mat ComplexDotMultiplication2(cv::Mat a, cv::Mat b) {
 }
 
 // complex element-wise division
-cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b) {
+cv::Mat ComplexDotDivision(const cv::Mat& a, const cv::Mat& b) {
     std::vector<cv::Mat> pa;
     std::vector<cv::Mat> pb;
     cv::split(a, pa);
@@ -382,7 +382,7 @@ cv::Mat ComplexDotDivision(const cv::Mat a, const cv::Mat b) {
     return res;
 }
 
-cv::Mat complexDotDivisionReal(cv::Mat a, cv::Mat b) {
+cv::Mat ComplexDotDivisionReal(const cv::Mat& a, const cv::Mat& b) {
     std::vector<cv::Mat> pa;
     cv::split(a, pa);
 
@@ -398,7 +398,7 @@ cv::Mat complexDotDivisionReal(cv::Mat a, cv::Mat b) {
 }
 
 // the mulitiplciation of two complex matrix
-cv::Mat ComplexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b) {
+cv::Mat ComplexMatrixMultiplication(const cv::Mat& a, const cv::Mat& b) {
     if (a.empty() || b.empty())
         return a;
 
@@ -422,7 +422,7 @@ cv::Mat ComplexMatrixMultiplication(const cv::Mat &a, const cv::Mat &b) {
 }
 
 // impliment matlab c = convn(a,b) and convn(a, b, 'valid')
-cv::Mat ComplexConvolution(const cv::Mat a_input, const cv::Mat b_input, const bool valid) {
+cv::Mat ComplexConvolution(const cv::Mat& a_input, const cv::Mat& b_input, const bool valid) {
     cv::Mat res;
     cv::Mat a_temp, a, b;
 
@@ -496,7 +496,7 @@ cv::Mat ComplexConvolution(const cv::Mat a_input, const cv::Mat b_input, const b
 }
 
 // change real mat to complex mat
-cv::Mat real2complex(const cv::Mat &x) {
+cv::Mat real2complex(const cv::Mat& x) {
     if (x.empty() || x.channels() == 2)
         return x;
     std::vector<cv::Mat> c = {x, cv::Mat::zeros(x.size(), CV_32FC1)};
@@ -506,7 +506,7 @@ cv::Mat real2complex(const cv::Mat &x) {
 }
 
 // mat conjugation
-cv::Mat mat_conj(const cv::Mat &org) {
+cv::Mat mat_conj(const cv::Mat& org) {
     if (org.empty())
         return org;
     std::vector<cv::Mat_<float>> planes;
@@ -518,7 +518,7 @@ cv::Mat mat_conj(const cv::Mat &org) {
 }
 
 // sum up all the mat elements, just for float type.
-float mat_sum_f(const cv::Mat &org) {
+float mat_sum_f(const cv::Mat& org) {
     if (org.empty())
         return 0;
     float sum = 0;
@@ -532,7 +532,7 @@ float mat_sum_f(const cv::Mat &org) {
 }
 
 // double type version of mat_sum
-double mat_sum_d(const cv::Mat &org) {
+double mat_sum_d(const cv::Mat& org) {
     if (org.empty())
         return 0;
     double sum = 0;
@@ -545,7 +545,7 @@ double mat_sum_d(const cv::Mat &org) {
     return sum;
 }
 
-void rot90(cv::Mat &matImage, int rotflag) {
+void rot90(cv::Mat& matImage, int rotflag) {
     if (rotflag == 1) { // anticlockwise
         cv::transpose(matImage, matImage);
         cv::flip(matImage, matImage, 1); // flip around y-axis
@@ -563,7 +563,7 @@ void rot90(cv::Mat &matImage, int rotflag) {
 }
 
 //KCF page 11 Figure 6
-void rearrange(cv::Mat &img) {
+void rearrange(cv::Mat& img) {
     // img = img(cv::Rect(0, 0, img.cols & -2, img.rows & -2));
     int cx = img.cols / 2;
     int cy = img.rows / 2;
@@ -582,7 +582,7 @@ void rearrange(cv::Mat &img) {
     tmp.copyTo(q2);
 }
 
-void normalizedLogTransform(cv::Mat &img) {
+void normalizedLogTransform(cv::Mat& img) {
     img = cv::abs(img);
     img += cv::Scalar::all(1);
     cv::log(img, img);

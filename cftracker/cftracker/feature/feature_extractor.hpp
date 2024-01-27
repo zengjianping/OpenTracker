@@ -24,7 +24,6 @@ public:
         const FeatureParameters &params, const bool &is_color_image);
 
 public:
-    std::vector<cv::Mat> get_hog_features_simd(const std::vector<cv::Mat> ims);
     std::vector<cv::Mat> get_hog_features(const std::vector<cv::Mat> ims);
     std::vector<cv::Mat> hog_feature_normalization(std::vector<cv::Mat> &hog_feat_maps);
 

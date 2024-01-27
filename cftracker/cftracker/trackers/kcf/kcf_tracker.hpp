@@ -91,7 +91,6 @@ namespace cftracker {
 
 class KcfTracker : public BaseTracker {
 public:
-    // Constructor
     KcfTracker(const std::string& config_file, bool dsst=false);
     ~KcfTracker();
 
@@ -99,39 +98,6 @@ public:
     void init(const cv::Mat& frame, const cv::Rect2f& roi) override; 
     bool update(const cv::Mat& frame, cv::Rect2f& roi) override;
     void release() override;
-
-protected:
-    KcfParameters params_;
-    float detect_thresh_kcf; // thresh hold for tracking error or not
-    float sigma; // gaussian kernel bandwidth
-    float lambda; // regularization
-    float interp_factor; // linear interpolation factor for adaptation
-    int cell_size; // HOG cell size
-    int cell_sizeQ; // cell size^2, to avoid repeated operations
-    float padding; // extra area surrounding the target
-    float output_sigma_factor; // bandwidth of gaussian target
-    int template_size; // template size
-
-    float scale_step; // scale step for multi-scale estimation
-    float scale_weight;  // to downweight detection scores of other scales for added stability
-
-//=====dsst====
-    float detect_thresh_dsst; // thresh hold for tracking error or not
-    int base_width_dsst; // initial ROI widt
-    int base_height_dsst; // initial ROI height
-    int scale_max_area; // max ROI size before compressing
-    float scale_padding; // extra area surrounding the target for scaling
-//    float scale_step; // scale step for multi-scale estimation
-    float scale_sigma_factor; // bandwidth of gaussian target
-    int n_scales; // # of scaling windows
-    float scale_lr; // scale learning rate
-    float *scaleFactors; // all scale changing rate, from larger to smaller with 1 to be the middle
-    int scale_model_width; // the model width for scaling
-    int scale_model_height; // the model height for scaling
-    float min_scale_factor; // min scaling rate
-    float max_scale_factor; // max scaling rate
-    float scale_lambda; // regularization
-//===========
 
 protected:
     bool update_kcf( const cv::Mat image, cv::Rect2f& roi);
@@ -156,7 +122,7 @@ protected:
     // Calculate sub-pixel peak for one dimension
     float subPixelPeak(float left, float center, float right);
 
-//=====dsst====
+    //=====dsst====
     // Initialization for scales
     void init_dsst(const cv::Mat image, const cv::Rect2f& roi);
 
@@ -175,7 +141,40 @@ protected:
 
     // Compute the hanning window for scaling
     cv::Mat createHanningMats_dsst();
-//===========
+    //===========
+
+protected:
+    KcfParameters params_;
+    float detect_thresh_kcf; // thresh hold for tracking error or not
+    float sigma; // gaussian kernel bandwidth
+    float lambda; // regularization
+    float interp_factor; // linear interpolation factor for adaptation
+    int cell_size; // HOG cell size
+    int cell_sizeQ; // cell size^2, to avoid repeated operations
+    float padding; // extra area surrounding the target
+    float output_sigma_factor; // bandwidth of gaussian target
+    int template_size; // template size
+
+    float scale_step; // scale step for multi-scale estimation
+    float scale_weight;  // to downweight detection scores of other scales for added stability
+
+    //=====dsst====
+    float detect_thresh_dsst; // thresh hold for tracking error or not
+    int base_width_dsst; // initial ROI widt
+    int base_height_dsst; // initial ROI height
+    int scale_max_area; // max ROI size before compressing
+    float scale_padding; // extra area surrounding the target for scaling
+    //float scale_step; // scale step for multi-scale estimation
+    float scale_sigma_factor; // bandwidth of gaussian target
+    int n_scales; // # of scaling windows
+    float scale_lr; // scale learning rate
+    float *scaleFactors; // all scale changing rate, from larger to smaller with 1 to be the middle
+    int scale_model_width; // the model width for scaling
+    int scale_model_height; // the model height for scaling
+    float min_scale_factor; // min scaling rate
+    float max_scale_factor; // max scaling rate
+    float scale_lambda; // regularization
+    //===========
 
     cv::Mat _alphaf;//alpha in paper, use this to calculate the detect result, changed in train();
     cv::Mat _prob;  //Gaussian Peak(training outputs);
@@ -183,7 +182,6 @@ protected:
     cv::Mat _num;   //numerator: use to update as MOSSE
     cv::Mat _den;   //denumerator: use to update as MOSSE
     cv::Mat _labCentroids;
-
     cv::Rect_<float> _roi;
 
 private:
@@ -196,14 +194,14 @@ private:
     bool _labfeatures;
     float _peak_value;
 
-//=====dsst====
+    //=====dsst====
     bool _dsst;
     float _scale_dsst;
     cv::Mat _den_dsst;
     cv::Mat _num_dsst;
     cv::Mat _hann_dsst;
     cv::Mat _prob_dsst;
-//============    
+    //============    
 };
 
 } // namespace cftracker

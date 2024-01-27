@@ -31,7 +31,7 @@ link_directories(
     ${Boost_LIBRARY_DIRS}
 )
 
-#0:no-simd;1:sse-Intel;2:neon-TX2;
+# 0:no-simd; 1:sse; 2:neon;
 set(SIMD 1)
 if(SIMD EQUAL 1)
     message(STATUS "use sse-Intel to compile")
@@ -39,7 +39,9 @@ if(SIMD EQUAL 1)
     add_definitions(-DUSE_SIMD)
 elseif(SIMD EQUAL 2)
     message(STATUS "use neon to compile")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto -march=armv8-a+crypto -mcpu=cortex-a57+crypto")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto -march=armv8-a+crypto -mcpu=cortex-a57+crypto")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto -mfpu=neon")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -flto")
     add_definitions(-DUSE_SIMD)
     add_definitions(-DUSE_NENOS)
 elseif(SIMD EQUAL 0)
@@ -106,6 +108,21 @@ file(GLOB ALL_LIBRARY_SRCS
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/eco/*.cpp
     ${PROJECT_SOURCE_DIR}/cftracker/trackers/kcf/*.cpp
 )
+
+file(GLOB SIMD_LIBRARY_HDRS
+    ${PROJECT_SOURCE_DIR}/cftracker/common/simd/*.hpp
+    ${PROJECT_SOURCE_DIR}/cftracker/feature/simd/*.hpp
+)
+
+file(GLOB SIMD_LIBRARY_SRCS
+    ${PROJECT_SOURCE_DIR}/cftracker/common/simd/*.cpp
+    ${PROJECT_SOURCE_DIR}/cftracker/feature/simd/*.cpp
+)
+
+if(SIMD GREATER 0)
+    list(APPEND ALL_LIBRARY_HDRS ${SIMD_LIBRARY_HDRS})
+    list(APPEND ALL_LIBRARY_SRCS ${SIMD_LIBRARY_SRCS})
+endif()
 
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBRARIES})

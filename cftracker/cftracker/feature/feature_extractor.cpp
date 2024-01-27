@@ -1,10 +1,15 @@
 #include "cftracker/feature/feature_extractor.hpp"
 #include "cftracker/feature/fhog.hpp"
-#include "cftracker/feature/gradient.hpp"
 #include "cftracker/common/ffttools.hpp"
 #include "cftracker/common/recttools.hpp"
 #include "cftracker/common/debug.hpp"
-#include "cftracker/common/wrappers.hpp"
+
+#ifdef USE_SIMD
+#include "cftracker/feature/simd/gradient.hpp"
+#include "cftracker/common/simd/sse.hpp"
+#include "cftracker/common/simd/wrappers.hpp"
+#endif
+
 
 
 namespace cftracker {
@@ -85,11 +90,7 @@ FEAT_DATA FeatureExtractor::extractor(const cv::Mat image, const cv::Point2f pos
 #endif
 
     if (params.useHogFeature) {
-#ifdef USE_SIMD
-        hog_feat_maps = get_hog_features_simd(img_samples[hog_feat_ind]);
-#else
         hog_feat_maps = get_hog_features(img_samples[hog_feat_ind]);
-#endif
         hog_feat_maps = hog_feature_normalization(hog_feat_maps);
         sum_features.push_back(hog_feat_maps);
     }
@@ -183,7 +184,8 @@ cv::Mat FeatureExtractor::sample_patch(const cv::Mat im, const cv::Point2f posf,
     return resized_patch;
 }
 
-std::vector<cv::Mat> FeatureExtractor::get_hog_features_simd(const std::vector<cv::Mat> ims) {
+#ifdef USE_SIMD
+std::vector<cv::Mat> get_hog_features_simd(const std::vector<cv::Mat> ims, int cell_size, int n_orients) {
     if (ims.empty()) {
         return std::vector<cv::Mat>();
     }
@@ -196,8 +198,8 @@ std::vector<cv::Mat> FeatureExtractor::get_hog_features_simd(const std::vector<c
         h = ims[k].rows;
         w = ims[k].cols;
         d = ims[k].channels();
-        binSize = params_.hog_features.fparams.cell_size; //6;
-        nOrients = params_.hog_features.fparams.nOrients; //9;
+        binSize = cell_size; //6;
+        nOrients = n_orients; //9;
         softBin = -1;
         nDim = useHog == 0 ? nOrients : (useHog == 1 ? nOrients * 4 : nOrients * 3 + 5);
         hb = h / binSize;
@@ -271,8 +273,9 @@ std::vector<cv::Mat> FeatureExtractor::get_hog_features_simd(const std::vector<c
 
     return hog_feats;
 }
+#endif
 
-std::vector<cv::Mat> FeatureExtractor::get_hog_features(const std::vector<cv::Mat> ims) {
+std::vector<cv::Mat> get_hog_features_cpu(const std::vector<cv::Mat> ims, int _cell_size, int n_orients) {
     if (ims.empty()) {
         return std::vector<cv::Mat>();
     }
@@ -286,7 +289,6 @@ std::vector<cv::Mat> FeatureExtractor::get_hog_features(const std::vector<cv::Ma
         _tmpl_sz.width = ims_f.cols;
         _tmpl_sz.height = ims_f.rows;
 
-        int _cell_size = hog_features_.fparams.cell_size;
         // Round to cell size and also make it even
         if (int(_tmpl_sz.width / (_cell_size)) % 2 == 0) {
             _tmpl_sz.width = ((int)(_tmpl_sz.width / (2 * _cell_size)) * 2 * _cell_size) + _cell_size * 2;
@@ -325,6 +327,16 @@ std::vector<cv::Mat> FeatureExtractor::get_hog_features(const std::vector<cv::Ma
     }
 
     return hog_feats;
+}
+
+std::vector<cv::Mat> FeatureExtractor::get_hog_features(const std::vector<cv::Mat> ims) {
+    int cell_size = params_.hog_features.fparams.cell_size;
+    int n_orients = params_.hog_features.fparams.nOrients;
+#ifdef USE_SIMD
+    return get_hog_features_simd(ims, cell_size, n_orients);
+#else
+    return get_hog_features_cpu(ims, cell_size, n_orients);
+#endif
 }
 
 std::vector<cv::Mat> FeatureExtractor::hog_feature_normalization(std::vector<cv::Mat> &hog_feat_maps) {

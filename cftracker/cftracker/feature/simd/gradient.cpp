@@ -4,9 +4,9 @@
 * Licensed under the Simplified BSD License [see external/bsd.txt]
 *******************************************************************************/
 
-#include "cftracker/feature/gradient.hpp"
-#include "cftracker/common/wrappers.hpp"
-#include "cftracker/common/sse.hpp"
+#include "cftracker/feature/simd/gradient.hpp"
+#include "cftracker/common/simd/wrappers.hpp"
+#include "cftracker/common/simd/sse.hpp"
 
 
 namespace cftracker {

@@ -130,11 +130,7 @@ cv::Mat ScaleFilter::extract_scale_sample(const cv::Mat &im, const cv::Point2f &
         std::vector<cv::Mat> im_vector, temp_hog;
         im_vector.push_back(im_patch);
         FeatureExtractor feature_extractor;
-#ifdef USE_SIMD
-		temp_hog = feature_extractor.get_hog_features_simd(im_vector);
-#else
 		temp_hog = feature_extractor.get_hog_features(im_vector);
-#endif
 		temp_hog = feature_extractor.hog_feature_normalization(temp_hog);
 
         debug("Not finished!-------------------");
