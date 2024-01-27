@@ -21,6 +21,7 @@ public:
 
     virtual void init(const cv::Mat& frame, const cv::Rect2f& roi); 
     virtual bool update(const cv::Mat& frame, cv::Rect2f& roi);
+    virtual void release();
 };
 
 } // namespace cftracker

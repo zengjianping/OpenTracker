@@ -27,5 +27,8 @@ bool BaseTracker::update(const cv::Mat& frame, cv::Rect2f& roi) {
     return false;
 }
 
+void BaseTracker::release() {
+}
+
 } // namespace cftracker
 

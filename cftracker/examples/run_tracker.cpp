@@ -274,13 +274,7 @@ int main(int argc, char **argv) {
         }
     }
 
-#ifdef USE_MULTI_THREAD
-    void *status;
-    if (pthread_join(ecotracker.thread_train_, &status)) {
-         cout << "Error:unable to join!"  << std::endl;
-         exit(-1);
-    }
-#endif
+    tracker->release();
 
     if (p_gt_bbox && num_updated_frames > 0) {
         avg_precision /= num_updated_frames;

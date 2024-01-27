@@ -8,14 +8,12 @@
 #include "cftracker/feature/feature_extractor.hpp"
 #include "cftracker/filters/scale_filter.hpp"
 
+#include <pthread.h>
+#include <unistd.h>
+
 #ifdef USE_CAFFE
 #include <caffe/caffe.hpp>
 #include <caffe/util/io.hpp>
-#endif
-
-#ifdef USE_MULTI_THREAD
-#include <pthread.h>
-#include <unistd.h>
 #endif
 
 
@@ -29,6 +27,7 @@ public:
 public:
     void init(const cv::Mat& frame, const cv::Rect2f& roi) override; 
     bool update(const cv::Mat& frame, cv::Rect2f& roi) override;
+    void release() override;
 
 protected:
     void init_parameters(const EcoParameters &parameters);
@@ -43,11 +42,8 @@ protected:
     FEAT_DATA full_fourier_coeff(const FEAT_DATA &xf);
     std::vector<cv::Mat> project_mat_energy(std::vector<cv::Mat> proj, std::vector<cv::Mat> yf);
     FEAT_DATA shift_sample(FEAT_DATA &xf, cv::Point2f shift, std::vector<cv::Mat> kx, std::vector<cv::Mat> ky);
-#ifdef USE_MULTI_THREAD
-    static void *thread_train(void *params);
-#endif
 
-private:
+protected:
     EcoParameters paramters_;
     bool is_color_image_;
     EcoParameters params_;
@@ -85,11 +81,10 @@ private:
     SampleUpdate sample_update_;
     EcoTrainer eco_trainer_;
 
-#ifdef USE_MULTI_THREAD
+protected:
+    static void *thread_train(void *params);
     bool thread_flag_train_;
-public:
     pthread_t thread_train_;
-#endif
 };
 
 } // namespace cftracker

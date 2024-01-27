@@ -99,6 +99,7 @@ struct EcoParameters {
 	float min_scale_factor;
 	float max_scale_factor;
 
+	bool use_multi_thread = false;
 	bool debug = false; // to show heatmap or not
 
 	// GPU

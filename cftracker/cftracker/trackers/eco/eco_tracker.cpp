@@ -323,9 +323,7 @@ void EcoTracker::init(const cv::Mat& im, const cv::Rect2f& rect) {
               hf_full_[i][0].rows, hf_full_[i][0].cols);
     }
 
-#ifdef USE_MULTI_THREAD
     thread_flag_train_ = true;
-#endif
     fpseco = ((double)cv::getTickCount() - timereco) / cv::getTickFrequency();
     debug("Initialize time: %f", fpseco);
 }
@@ -466,18 +464,19 @@ bool EcoTracker::update(const cv::Mat& frame, cv::Rect2f& roi) {
         sample_energy_ = sample_energy_ * (1 - params_.learning_rate) +
                          FeautreComputePower2(xlf_proj) * params_.learning_rate;
 
-#ifdef USE_MULTI_THREAD
-        while (thread_flag_train_ == false) {
-            usleep(10); // sleep to allow change of flag in the thread
+        if (params_.use_multi_thread) {
+            while (thread_flag_train_ == false) {
+                usleep(10); // sleep to allow change of flag in the thread
+            }
+            if (pthread_create(&thread_train_, NULL, thread_train, this)) {
+                std::cout << "Error:unable to create thread!" << std::endl;
+                exit(-1);
+            }
         }
-        if (pthread_create(&thread_train_, NULL, thread_train, this)) {
-            std::cout << "Error:unable to create thread!" << std::endl;
-            exit(-1);
+        else {
+            eco_trainer_.train_filter(sample_update_.get_samples(),
+                sample_update_.get_prior_weights(), sample_energy_); // #6 x slower#
         }
-#else
-        eco_trainer_.train_filter(sample_update_.get_samples(),
-            sample_update_.get_prior_weights(), sample_energy_); // #6 x slower#
-#endif
         frames_since_last_train_ = 0;
     }
     else {
@@ -597,19 +596,27 @@ bool EcoTracker::update(const cv::Mat& frame, cv::Rect2f& roi) {
     return false;
 }
 
-#ifdef USE_MULTI_THREAD
 void *EcoTracker::thread_train(void *params) {
     //debug("thread running");
-    EcoTracker *eco = (EcoTracker *)params;
-    eco->thread_flag_train_ = false;
-    eco->eco_trainer_.train_filter(eco->sample_update_.get_samples(),
-        eco->sample_update_.get_prior_weights(), eco->sample_energy_);
+    EcoTracker *tracker = (EcoTracker *)params;
+    tracker->thread_flag_train_ = false;
+    tracker->eco_trainer_.train_filter(tracker->sample_update_.get_samples(),
+        tracker->sample_update_.get_prior_weights(), tracker->sample_energy_);
     //debug("thread end");
-    eco->thread_flag_train_ = true;
+    tracker->thread_flag_train_ = true;
     //pthread_detach(pthread_self());
     pthread_exit(NULL);
 }
-#endif
+
+void EcoTracker::release() {
+    void *status;
+    if (thread_train_) {
+        if (pthread_join(thread_train_, &status)) {
+            std::cout << "Error:unable to join!"  << std::endl;
+            exit(-1);
+        }
+    }
+}
 
 void EcoTracker::init_parameters(const EcoParameters &parameters) {
     // Features
