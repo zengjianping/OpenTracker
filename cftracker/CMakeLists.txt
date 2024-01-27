@@ -124,14 +124,19 @@ if(SIMD GREATER 0)
     list(APPEND ALL_LIBRARY_SRCS ${SIMD_LIBRARY_SRCS})
 endif()
 
+set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install")
+#set(INSTALL_LIB_DIR "${PROJECT_BINARY_DIR}/lib") # 假设安装目录在编译目录的lib子目录内
+set(CMAKE_SKIP_BUILD_RPATH FALSE) # 编译时加上RPATH
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) # 编译时RPATH不使用安装的RPATH
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/binaries")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE) # 安装的执行文件加上RPATH
+
 add_library(${PROJECT_NAME} SHARED ${ALL_LIBRARY_HDRS} ${ALL_LIBRARY_SRCS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBRARIES})
 
 add_executable(run_tracker.bin ${PROJECT_SOURCE_DIR}/examples/run_tracker.cpp)
 target_link_libraries(run_tracker.bin PUBLIC ${PROJECT_NAME}
     ${OpenCV_LIBRARIES} ${Boost_LIBRARIES} gflags glog)
-
-set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install")
 
 install(
     TARGETS ${PROJECT_NAME} run_tracker.bin
